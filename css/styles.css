@@ -1,0 +1,62 @@
+/* css  */
+
+
+
+/*
+#messages {
+	color:red; 
+	background-color:#FFE5E5; 
+	width:600px; 
+	padding:12px; 
+	display:none;
+}
+.editor-instance {
+	clear:both;
+}
+.editor-instance form {
+	float:left;
+	clear:left;
+}
+.action-load-text {
+	float:left;
+}
+.editor {
+	width:600px; 
+	height:400px;
+}
+.output {
+	float:left; 
+	width:600px;
+	margin:36px 24px;
+}
+*/
+form, .results {
+	width:45%;
+	float:left;
+}
+textarea {
+	margin-top:12px;
+}
+.results {
+	margin-left: 40px;
+	margin-bottom:20px;
+	display:none;
+}
+.pre {
+	height:200px;
+	overflow:auto;
+}
+.editor-instance input {
+	width:160px;
+}
+.editor-instance select {
+	width:260px;
+	display:inline;
+}
+.linkEntry {
+	margin-top:12px;
+}
+
+
+
+

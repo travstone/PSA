@@ -2,85 +2,98 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Test</title>
+	<title>Textarea Test</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="css/bootstrap.css" rel="stylesheet">
+	<link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
-
-	<h1 id="header">Test</h1>
-	<div id="messages" style="color:red; background-color:#FFE5E5; width:600px; padding:12px; display:none"></div>
+<div class="container">
+	<h1 id="header">Textarea Test</h1>
+	<div id="messages"></div>
 	
-	<div id="textEditor1" style="clear:both">
-		<a href="#" id="load-dummy-text" class="action-load-text" style="float:left;">Load Text</a>
-		<form style="float:left;clear:left;">
-			<input id="save_essay1" class="promptbutton action-save-essay" type="button" value="Save Essay" style="margin-left: 1.9px;">
-			<input id="highlight1" class="promptbutton action-set-link" type="button" disabled="" value="Link Text">
-			<input id="removehigh1" class="promptbutton action-del-link" type="button" value="Remove Link" style="display:none">
-			<input id="visithigh1" class="promptbutton action-view-link" type="button" value="Visit Link" title="" style="display:none">
-			<br />
-			<div class="linkEntry" style="display:none">Choose Artifact
-				<select class="url-list">
-					<option disabled="disabled" selected="selected">Please choose</option>
-					<option>http://www.example1.com/index.html</option>
-					<option>http://www.example2.com/index.html</option>
-					<option>http://www.example3.com/index.html</option>
-				</select>
-			</div>
-			<br />
-			<textarea id="textarea1" class="editor" style="width:600px; height:400px;"></textarea>
-		</form>
+	<div id="textEditor1" class="row editor-instance">
+		<div class="loading-links">
+			<a href="#" id="load-dummy-text" class="action-load-text">Load Text</a> | 
+			<a href="#" id="load-dummy-html" class="action-load-html">Load HTML</a>
+		</div>
+		<div class="col-md-6">
+			<form>
+				<input id="save_essay1" class="promptbutton action-save-essay form-control btn btn-primary" type="button" value="Save Essay">
+				<input id="highlight1" class="promptbutton action-set-link form-control btn btn-primary" type="button" disabled="" value="Link Text" style="display:none">
+				<input id="removehigh1" class="promptbutton action-del-link form-control btn btn-primary" type="button" value="Remove Link" style="display:none">
+				<input id="visithigh1" class="promptbutton action-view-link form-control btn btn-primary" type="button" value="Visit Link" title="" style="display:none">
+				<div class="linkEntry" style="display:none">Choose Artifact
+					<select class="url-list form-control">
+						<option disabled="disabled" selected="selected">Please choose</option>
+						<option>http://www.example.com/index1.html</option>
+						<option>http://www.example.com/index2.html</option>
+						<option>http://www.example.com/index3.html</option>
+					</select>
+				</div>
 
-		<div style="float:left; width:600px;" class="output"></div>
+				<textarea id="textarea1" class="form-control editor" rows="18"></textarea>
+			</form>
+		</div>
+		<div class="col-md-6 results"><h3>Markup: </h3><div class="pre"></div></div>
+		<div class="col-md-6 results"><h3>Display: </h3><div class="output"></div></div>
 		
 	</div>
 	
-	<div id="textEditor2" style="clear:both; padding-top:80px;">
-		<a href="#" id="load-dummy-text2" class="action-load-text" style="float:left;">Load Text</a>
-		
-		<form style="float:left;clear:left;">
-			<input id="save_essay2" class="promptbutton action-save-essay" type="button" value="Save Essay" style="margin-left: 1.9px;">
-			<input id="highlight2" class="promptbutton action-set-link" type="button" disabled="" value="Link Text">
-			<input id="removehigh2" class="promptbutton action-del-link" type="button" value="Remove Link" style="display:none">
-			<input id="visithigh2" class="promptbutton action-view-link" type="button" value="Visit Link" title="" style="display:none">
-			<br />
-			<div class="linkEntry" style="display:none">Choose Artifact
-				<select class="url-list">
-					<option disabled="disabled" selected="selected">Please choose</option>
-					<option>http://www.example1.com/index.html</option>
-					<option>http://www.example2.com/index.html</option>
-					<option>http://www.example3.com/index.html</option>
-				</select>
-			</div>
-			<br />
-			<textarea id="textarea2" class="editor" style="width:600px; height:400px;"></textarea>
-		</form>
+	<div id="textEditor2" class="row editor-instance" style="padding-top:80px;">
+		<div class="loading-links2">
+			<a href="#" id="load-dummy-text2" class="action-load-text">Load Text</a> | 
+			<a href="#" id="load-dummy-html2" class="action-load-html">Load HTML</a>
+		</div>
+		<div class="col-md-6">
+			<form>
+				<input id="save_essay2" class="promptbutton action-save-essay form-control btn btn-primary" type="button" value="Save Essay">
+				<input id="highlight2" class="promptbutton action-set-link form-control btn btn-primary" type="button" disabled="" value="Link Text" style="display:none">
+				<input id="removehigh2" class="promptbutton action-del-link form-control btn btn-primary" type="button" value="Remove Link" style="display:none">
+				<input id="visithigh2" class="promptbutton action-view-link form-control btn btn-primary" type="button" value="Visit Link" title="" style="display:none">
 
-		<div style="float:left; width:600px;" class="output"></div>
+				<div class="linkEntry" style="display:none">Choose Artifact
+					<select class="url-list form-control">
+						<option disabled="disabled" selected="selected">Please choose</option>
+						<option>http://www.example.com/index1.html</option>
+						<option>http://www.example.com/index2.html</option>
+						<option>http://www.example.com/index3.html</option>
+					</select>
+				</div>
+
+				<textarea id="textarea2" class="form-control editor" rows="18"></textarea>
+			</form>
+		</div>
+		<div class="col-md-6 results"><h3>Markup: </h3><div class="pre"></div></div>
+		<div class="col-md-6 results"><h3>Display: </h3><div class="output"></div></div>
 		
 	</div>
 	
+	<div id="dummy-html" style="display:none">
+<p>Re being uniquely ETS, I think my <a href="http://www.example.com/index1.html">approach</a> (alternative 1 below) is actually different than Proteach (alternative 2), so I think we're safe, but see what you think:</p>
+<p>1. Show link text only (my proposal)</p>
+
+<p>My proposal to show the link text within brackets -- [link text] -- but not <a href="http://www.example.com/index2.html">surface</a> the actual href there because that was closest to the requirements I saw and also that's the simplest for the user (and us!).  Of course we have to keep track of those hrefs, and pair them to [link text]s, but not displaying them is simpler than <a href="http://www.example.com/index3.html">surfacing</a> them for a few reasons. You have the popup selector to choose them and this is the simplest way to prevent the user from modifying the href such that it might not match an uploaded asset.</p>
+
+<p>2. Show link text and link href (Proteach's approach)</p>
+
+<p>This sounds like what Proteach did, if I understand correctly. This is less compatible with the popup you already have which seems like a nice feature to keep and more powerful than Proteach.  Before alternative 1, I actually considered showing links as:</p>
+	</div>
 	
 	<div id="dummy-text" style="display:none">
-	
 <p>Re being uniquely ETS, I think my approach (alternative 1 below) is actually different than Proteach (alternative 2), so I think we're safe, but see what you think:</p>
+<p>1. Show link text only (my proposal)</p>
 
-<p>1.	Show link text only (my proposal)</p>
+<p>My proposal to show the link text within brackets -- [link text] -- but not surface the actual href there because that was closest to the requirements I saw and also that's the simplest for the user (and us!).  Of course we have to keep track of those hrefs, and pair them to [link text]s, but not displaying them is simpler than surfacing them for a few reasons. You have the popup selector to choose them and this is the simplest way to prevent the user from modifying the href such that it might not match an uploaded asset.</p>
 
-<p>My proposal to show the link text within brackets --  [link text]  -- but not surface the actual href there because that was closest to the requirements I saw and also that's the simplest for the user (and us!).  Of course we have to keep track of those hrefs, and pair them to [link text]s, but not displaying them is simpler than surfacing them for a few reasons.  You have the popup selector to choose them and this is the simplest way to prevent the user from modifying the href such that it might not match an uploaded asset.</p>
+<p>2. Show link text and link href (Proteach's approach)</p>
 
-<p>2.	Show link text and link href (Proteach's approach)</p>
-
-<p>This sounds like what Proteach did, if I understand correctly.  This is less compatible with the popup you already have which seems like a nice feature to keep and more powerful than Proteach.  Before alternative 1, I actually considered showing links as:</p>
-
-<p>Here is the supporting [Published Articles List] (http://a.b.com) that will support my submission.</p>
-
-<p>and there are other ways to do this, but I think we'd then need to prevent any editing within the parenthesis-more work that's just not needed in alternative 1, and not as friendly for the user I think.</p>
-
-<p>In our research we discovered that, in IE, if you type a url in a contenteditable it will automatically create a link out of it; preventing this is a requirement that we missed.  I bet there are more issues along this line, but all are avoided with the textarea solution above; simpler already, and fewer unknowns and cross-browser potential issues, etc.</p>
-
-<p>So we will proceed assuming the input field is a textarea, and not a contenteditable, and demonstrate a thorough solution including simulating load and save.  We'll use alternative 1 above, but happy to start with another if you prefer.</p>
+<p>This sounds like what Proteach did, if I understand correctly. This is less compatible with the popup you already have which seems like a nice feature to keep and more powerful than Proteach.  Before alternative 1, I actually considered showing links as:</p>
 	</div>
 	
+</div>	
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<script src="js/bootstrap.js"></script>
 	<script src="js/scripts.js"></script>
 </body>
 </html>
