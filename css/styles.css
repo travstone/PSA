@@ -1,35 +1,14 @@
 /* css  */
 
-
-
-/*
+.messages-container {
+	height:36px;
+	width:45%;
+}
 #messages {
-	color:red; 
-	background-color:#FFE5E5; 
-	width:600px; 
-	padding:12px; 
-	display:none;
+	text-indent:6px;
+	color:red;
+	background-color:#FFE5E5;
 }
-.editor-instance {
-	clear:both;
-}
-.editor-instance form {
-	float:left;
-	clear:left;
-}
-.action-load-text {
-	float:left;
-}
-.editor {
-	width:600px; 
-	height:400px;
-}
-.output {
-	float:left; 
-	width:600px;
-	margin:36px 24px;
-}
-*/
 form, .results {
 	width:45%;
 	float:left;
@@ -47,7 +26,7 @@ textarea {
 	overflow:auto;
 }
 .editor-instance input {
-	width:160px;
+	width:auto;
 }
 .editor-instance select {
 	width:260px;

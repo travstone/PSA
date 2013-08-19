@@ -8,9 +8,9 @@ var textEditorInstance = function($editor){
 		savedLinks : [],
 		tempString : '',
 		linkRegex : /\<a href\="([a-zA-Z0-9\:\/\.]+)"\>([a-zA-Z0-9\:\/\.]+)\<\/a\>/gi,
-		linkReplaceRegex : /(\[\[[a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$5\^7\*\9\0\-_\=\+\;\:"'\<\>\ ]+?\]\])/gi,
-		openLinkRegex : /\[\[/gi,
-		closeLinkRegex : /\]\]/gi,
+		linkReplaceRegex : /(\[__[a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$5\^7\*\9\0\-_\=\+\;\:"'\<\>\ ]+?__\])/gi,
+		openLinkRegex : /\[__/gi,
+		closeLinkRegex : /\]\]/gi, // not used, can delete
 		replaceCount : 0,
 		linebreakRegex : /[\r\n]+/gi,
 		
@@ -57,13 +57,13 @@ var textEditorInstance = function($editor){
 			if(innerRef.tempString[2].length > 0){
 				innerRef.savedLinks.push({'url':linkSelected});
 				var textareaContent = $context.find('.editor').val();
-				var output = [textareaContent.slice(0,innerRef.tempString[0]),'[[',innerRef.tempString[2],']]',textareaContent.slice(innerRef.tempString[1])].join('');
+				var output = [textareaContent.slice(0,innerRef.tempString[0]),'[__',innerRef.tempString[2],'__]',textareaContent.slice(innerRef.tempString[1])].join('');
 				$context.find('.editor').val(output);
 				$context.find('.action-set-link').attr('disabled','true');
 				$context.find('.action-del-link').attr('data-link-id',innerRef.savedLinks.length);
 				$context.find('.linkEntry').slideToggle('fast').delay(2000);//.css('display','none');
 				
-				innerRef.selectText($context.find('.editor').get(0),innerRef.tempString[0]+2,innerRef.tempString[1]+2);
+				innerRef.selectText($context.find('.editor').get(0),innerRef.tempString[0]+3,innerRef.tempString[1]+3);
 				innerRef.resetEditor($editor);
 			}
 		},
@@ -81,22 +81,30 @@ var textEditorInstance = function($editor){
 
 			for(count;count>=0;count--){
 				if(searchText.charAt(count) === ']'){
-					if(searchText.charAt(count-1) === ']' && selectionType === 'point' && count < selection[0]){
+					if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && selectionType === 'point' && count < selection[0]){
 						// this means we're beyond a closing tag
 						break;
 					} 
-					else if(searchText.charAt(count-1) === ']' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
+					else if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
 						output = true;
 						break;
 					}
 				}
 				
-				if(searchText.charAt(count) === '['){
-					if(searchText.charAt(count-1) === '[' && selectionType === 'point'){
+				if(searchText.charAt(count) === '_'){
+					if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && selectionType === 'point'){
 						output = true;
 						break;
 					}
-					if(searchText.charAt(count-1) === '[' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
+					if(searchText.charAt(count-1) === '[' && searchText.charAt(count+1) === '_' && selectionType === 'point'){
+						output = true;
+						break;
+					}
+					if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
+						output = true;
+						break;
+					}
+					if(searchText.charAt(count-1) === '[' && searchText.charAt(count+1) === '_' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
 						output = true;
 						break;
 					}
@@ -115,13 +123,13 @@ var textEditorInstance = function($editor){
 				targetId = parseInt($target.attr('data-link-id'));
 
 			for(count; count<searchTextLength; count++){
-				if(searchText.charAt(count) === '[' && searchText.charAt(count+1) === '['){
+				if(searchText.charAt(count) === '[' && searchText.charAt(count+1) === '_' && searchText.charAt(count+2) === '_'){
 					var bracket1 = count;
 					var bracket2 = count+1;
 					if(linkCount === targetId){
 						for(count; count<searchTextLength; count++){
-							if(searchText.charAt(count) === ']' && searchText.charAt(count+1) === ']'){
-								searchText = searchText.slice(0,bracket1) + searchText.slice((bracket2+1),count) + searchText.slice(count+2);
+							if(searchText.charAt(count) === '_' && searchText.charAt(count+1) === '_' && searchText.charAt(count+2) === ']'){
+								searchText = searchText.slice(0,bracket1) + searchText.slice((bracket2+2),count) + searchText.slice(count+3);
 								$editor.find('textarea').val(searchText);
 								innerRef.resetEditor($editor);
 								break;
@@ -143,8 +151,8 @@ var textEditorInstance = function($editor){
 		
 		linkArrayPosition : function(selection,$editor){
 			var output = null,
-				count = selection[1]+1,
-				searchText = $editor.find('textarea').val().slice(0,count);
+				count = selection[1]+2,
+				searchText = $editor.find('textarea').val().slice(0,count);	
 			output = searchText.match(innerRef.openLinkRegex).length;
 			return output;
 		},
@@ -157,17 +165,17 @@ var textEditorInstance = function($editor){
 				innerRef.showExistingLinkTools(linkId-1,$editor);
 			}
 			else if(selectedText[2].length > 0){
-				$context.find('.action-set-link').removeAttr('disabled').css('display','');
+				$context.find('.action-set-link').removeAttr('disabled');
 				innerRef.tempString = selectedText;
 			} else {
-				$context.find('.action-set-link').attr('disabled','true').css('display','none');
+				$context.find('.action-set-link').attr('disabled','true');
 				innerRef.tempString = '';
 			};
 		},
 		
 		recordLinkInArray : function(match, p1, p2, offset, string){
 			innerRef.savedLinks.push({'url':p1});
-			return '[[' + p2 + ']]';
+			return '[__' + p2 + '__]';
 		},
 		
 		replaceLinks : function(html){
@@ -176,10 +184,10 @@ var textEditorInstance = function($editor){
 		},
 		
 		replaceBrackets : function(match, p1, offset, string){
-			var bracketsRemoved = match.slice(2,-2);
+			var bracketsRemoved = match.slice(3,-3);
 			var linkUrl = innerRef.savedLinks[innerRef.replaceCount].url;
 			var linkStart = '<a href="';
-			var linkMid = '">';
+			var linkMid = '" target="_blank">';
 			var linkEnd = '</a>';
 			innerRef.replaceCount++;
 			return linkStart + linkUrl + linkMid + bracketsRemoved + linkEnd;
@@ -198,39 +206,43 @@ var textEditorInstance = function($editor){
 		
 		resetEditor : function($editor){
 			innerRef.tempString = '';
-			$editor.find('.action-set-link').attr('disabled','true').css('display','none');
+			$editor.find('.action-set-link').attr('disabled','true');
 			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			$('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
 		resetAll : function(){
 			innerRef.tempString = '';
-			$('.action-set-link').attr('disabled','true').css('display','none');
+			$('.action-set-link').attr('disabled','true');
 			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			$('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
-		showWarning : function(message){
-			$('#messages').hide();
-			$('#messages').text(message).slideToggle('fast').delay(4000).slideToggle('slow');
+		showWarning : function($editor,message){
+		console.log($editor,'warning');
+			$editor.find('#messages').hide();
+			$editor.find('#messages').text(message).css('padding','6px').slideToggle('fast').delay(4000).slideToggle('slow').css('padding','');
 		},
 		
 		init : (function(){
 			
 			$editor.on('keypress',function(e){
+				console.log((e.keyCode ? e.keyCode : e.which));
 				var code = (e.keyCode ? e.keyCode : e.which);
 				var position = $editor.find('textarea').prop("selectionStart");
-				if(code === 91){
+				if(code === 95){
 					var text = $editor.find('textarea').val().toString();
-					if(text.charAt(position-1) === '['){
+					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '[' ){
 					e.preventDefault();
-					innerRef.showWarning('two opening brackets ([[) cannot be used in sequence');
+					innerRef.showWarning($editor,'Sorry, the sequence "[__" is not permitted');
 					}
-				} else if(code === 93 ){
+
+				} 
+				else if(code === 93 ){
 					var text = $editor.find('textarea').val().toString();
-					if(text.charAt(position-1) === ']'){
+					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '_'){
 					e.preventDefault();
-					innerRef.showWarning('two closing brackets (]]) cannot be used in sequence');
+					innerRef.showWarning($editor,'Sorry, the sequence "__]" is not permitted');
 					}
 				}
 			});
