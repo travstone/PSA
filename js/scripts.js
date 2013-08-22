@@ -143,6 +143,10 @@ var simpleTextEditor = function(argObject){
 						output = true;
 						break;
 					}
+					// if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && selectionType === 'range'){
+						// output = true;
+						// break;
+					// }
 					if(searchText.charAt(count-1) === '[' && searchText.charAt(count+1) === '_' && selectionType === 'point'){
 						output = true;
 						break;
@@ -301,6 +305,9 @@ var simpleTextEditor = function(argObject){
 				else if(pastedText.match(innerRef.closeLinkRegex)){
 					errorState = true;
 				}
+				else {
+					innerRef.resetEditor();
+				}
 				if(errorState){
 					innerRef.showWarning($editorId,'Please remove link formatting characters and retry pasting.');
 					innerRef.$editorInstance.find('.editor').val(priorText);
@@ -314,6 +321,13 @@ var simpleTextEditor = function(argObject){
 				var code = (e.keyCode ? e.keyCode : e.which),
 					position = $editorInstance.find('.editor').prop("selectionStart"),
 					text = '';
+					// if(innerRef.preventPaste){
+					
+						// e.preventDefault;
+						// e.returnValue = false;
+						// innerRef.showWarning('Please select outside of link');
+						// return false;
+					// }
 				if(code === 95){
 					text = $editorInstance.find('.editor').val().toString();
 					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '[' ){
@@ -332,18 +346,60 @@ var simpleTextEditor = function(argObject){
 				else if(code === 37 || code === 38 || code === 39 || code === 40){
 					// TODO: this is buggy, find a better way to capture arrow-based selection
 					//innerRef.selectInEditor()
-				}
+				}				
 				else if(code === 8){
-					console.log('backspce');
+
 					var position = $editorInstance.find('.editor').prop("selectionStart"),
-						text = $editorInstance.find('.editor').val().toString();
-					if(text.charAt(position-1) === ']' && text.charAt(position-2) === '_' && text.charAt(position-3) === '_'){
+						text = $editorInstance.find('.editor').val().toString(),
+						isError = false;
+					if(((text.charAt(position-1) === ']' && text.charAt(position-2) === '_' && text.charAt(position-3) === '_') ||
+						(text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_')  ||
+						(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')) ||
+						
+						((text.charAt(position-1) === '_' && text.charAt(position-2) === '_' && text.charAt(position-3) === '[') ||
+						(text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[')  ||
+						(text.charAt(position+1) === '_' && text.charAt(position) === '_' && text.charAt(position-1) === '['))){
+							
+						isError = true
+					} 
+					else if(innerRef.preventPaste){
+					
+						isError = true
+					}
+					if(isError){
+						e.preventDefault;
+						e.returnValue = false;
+						innerRef.showWarning('Please use the remove link button to remove a link');
+						return false;
+					}
+				}				
+				else if(code === 46){
+
+					var position = $editorInstance.find('.editor').prop("selectionStart"),
+						text = $editorInstance.find('.editor').val().toString(),
+						isError = false;
+					if(((text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_') ||
+						(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')  ||
+						(text.charAt(position+2) === ']' && text.charAt(position+1) === '_' && text.charAt(position) === '_')) ||
+						
+						((text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[') ||
+						(text.charAt(position) === '_' && text.charAt(position+1) === '_' && text.charAt(position-1) === '[')  ||
+						(text.charAt(position+2) === '_' && text.charAt(position+1) === '_' && text.charAt(position) === '['))){
+						
+						isError = true
+					} 
+					else if(innerRef.preventPaste){
+					
+						isError = true
+					}
+					if(isError){
 						e.preventDefault;
 						e.returnValue = false;
 						innerRef.showWarning('Please use the remove link button to remove a link');
 						return false;
 					}
 				}
+				
 			});
 			
 			$editorInstance.on('click','.action-set-link',function(e){
@@ -383,14 +439,14 @@ var simpleTextEditor = function(argObject){
 				innerRef.onClickSave(innerRef.saveEditorContents());
 			});
 			
-			$editorInstance.on('paste',function(e){
+			$editorInstance.on('paste cut',function(e){
 				if(!innerRef.preventPaste){
 					var priorText = innerRef.$editorInstance.find('.editor').val();
 					innerRef.inspectPaste(priorText);
 				} else {
 					e.stopPropagation();
 					e.preventDefault();
-					innerRef.showWarning('Sorry, paste is not permitted when selection overlaps a link');
+					innerRef.showWarning('Please select outside of link. Cut/paste is not allowed for current selection');
 				}
 			});
 
@@ -414,12 +470,8 @@ var simpleTextEditor = function(argObject){
 		setLink : function(htmlString){
 			// See saveEssay for info about allowable html string
 			return innerRef.setLink(htmlString);
-		},
-		currentSelect : function(){
-			return innerRef.currentSelection;
 		}
 		
 	};
 	return publicRef;
-	//return innerRef;
 };
