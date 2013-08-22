@@ -3,28 +3,45 @@
 	Plain Text Link Editor v1.0
 	2013-08-22
 	
-	Allows designation of hyperlinks in a textarea, which are merged into an HTML string at save
+	OVERVIEW:
+	
+	Allows designation of hyperlinks in a textarea, which are merged into an HTML string at save. Supprts import of markup 
+	which is converted to link signifiers, which appear like this in the textarea:
+	
+	[__ some link text __]
+	
 
-	Constructor
-
-	@PARAM: argObject (object)
-		properties: 
-		{
-			editorId: editor instance container id string,
-			onClickGetLinks: callback for when user clicks 'add link','
-			onClickSave': callback for when user clicks 'save essay'
-		}
-	@RETURN:
-		setEditorContent : called on instance of object to load content
-			@PARAM: content [HTML String]
-			@RETURN: true on succesful load, false if no content supplied
-		getEditorContent : called on instance of object to retrieve content (no params)
-			@RETURN: Content [HTML string] containing only <p> and <a> tags, <a>
-		showMessage : Called on instance of object to display an error message in the editor (no return)
-			@PARAM: message [string]
-		setLink : called on instance of object to set a link (will only work when there's a selection in the editor)
-			@PARAM: <a> tag complete [string]
-			@RETURN: true if link set, false if no selection
+	CONSTRUCTOR:
+	
+		@PARAM: argObject (object)
+			properties: 
+			{
+				editorId: editor instance container id string
+				onClickGetLinks: callback for when user clicks 'add link', used to prompt the server side to present the link selector
+				onClickSave': callback for when user clicks 'save essay'
+			}
+		@RETURN:
+			setEditorContent : called on instance of object to load content
+				@PARAM: content [HTML String]
+				@RETURN: true on succesful load, false if no content supplied
+				HTML string can consist of any valid html, but only <a> tags will be parsed out to an array
+				All other html tags will be stripped from the input
+				
+			getEditorContent : called on instance of object to retrieve content (no params)
+				@RETURN: Content [HTML string] containing only <p> and <a> tags, <a>
+				The returned html string will be enclosed in a <p> tag, with line breaks converted 
+				to the sequence '</p><p>', providing paragraphs at each line break
+				<a> tags will be generated for each link signifier '[__ some text __], at the
+				appropriate location in the string
+				
+			showMessage : Called on instance of object to display an error message in the editor (no return)
+				@PARAM: message [string]
+				
+			setLink : called on instance of object to set a link (will only work when there's a selection in the editor)
+				@PARAM: <a> tag complete [string]
+				@RETURN: true if link set, false if no selection
+				
+			
 		
 	REQUIRED MARKUP:
 
@@ -160,41 +177,34 @@ var plainTextLinkEditor = function(argObject){
 			if(selection[2] !== ''){
 				selectionType = 'range';	
 			}
-	
-			//console.log(selectionType + ' select');
-				
+		
 			for(count;count>=0;count--){
 			
 				if(selectionType === 'point'){
+					
 					if(searchText.charAt(count) === ']'){
+						
 						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && count < selection[0]){
 							// this means we're beyond a closing tag
-							//console.log('right of closing signifier, not within link');
-							// prevent paste should be false here
 							break;
 						}
 					}
 					
 					if(searchText.charAt(count) === '_'){
+						
 						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && count < selection[0]){
-							//console.log('within link ');
 							// fires when point is between open and close
-							// prevent paste should be false here
 							output = true;
 							break;
 						}
 						if(searchText.charAt(count+1) === '_' && searchText.charAt(count-1) === '['){
-							//console.log('within link open');
 							// fires when point is between open and close
-							// prevent paste should be true here
 							this.preventPaste = true;
 							output = true;
 							break;
 						}
 						if(searchText.charAt(count+1) === '_' && searchText.charAt(count+2) === ']' && count < selection[0]){
-							//console.log('within link close');
 							// fires when point is between open and close
-							// prevent paste should be true here
 							this.preventPaste = true;
 							output = true;
 							break;
@@ -205,41 +215,30 @@ var plainTextLinkEditor = function(argObject){
 				else if(selectionType === 'range'){
 					
 					if(searchText.charAt(count) === ']'){
+						
 						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && count >= selection[0] && count <= selection[1]){
-							//console.log('overlapping close tags');
 							// fires when range overlaps the closing tag
-							// prevent paste should be true here
 							this.preventPaste = true;
 							output = true;
 							break;
 						}
 						
 						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && count < selection[0] ){
-							//console.log('right of closing signifier, not within link');
 							// fires when range is outside of tag
-							// prevent paste should be false here
 							break;
 						}
-						
-						
 					}
-					
-					
-					
+
 					else if(searchText.charAt(count) === '_'){
 						
 						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && count < selection[0]){
-							//console.log('in link, not overlapping');
 							// fires when selection is entirely within a link
-							// prevent paste should be false here
 							output = true;
 							break;
 						}
 						
 						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && count >= selection[0]){
-							//console.log('overlapping open tag');
 							// fires when selection overlaps open tag
-							// prevent paste should be true here
 							this.preventPaste = true;
 							output = true;
 							break;
@@ -361,16 +360,12 @@ var plainTextLinkEditor = function(argObject){
 		},
 		
 		resetEditor : function(){
-			//var editor = this.$editorInstance.find('.editor').get(0);
-			//editor.selectionStart = editor.selectionEnd = -1;
-			//this.currentSelection = {};
 			this.$editorInstance.find('.action-set-link').attr('disabled','true');
 			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			$('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
 		resetAllEditors : function(){
-			//this.currentSelection = {};
 			$('.action-set-link').attr('disabled','true');
 			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			$('.action-del-link').removeAttr('data-link-id').hide();
@@ -438,7 +433,6 @@ var plainTextLinkEditor = function(argObject){
 						e.preventDefault();
 						innerRef.showWarning('Sorry, the sequence "[,_,_" is not permitted. Underscore removed.');
 					}
-
 				} 
 				else if(code === 93){
 					text = $editorInstance.find('.editor').val().toString();
@@ -503,7 +497,6 @@ var plainTextLinkEditor = function(argObject){
 						return false;
 					}
 				}
-				
 			});
 			
 			$editorInstance.on('click','.action-set-link',function(e){
@@ -553,8 +546,6 @@ var plainTextLinkEditor = function(argObject){
 					innerRef.showWarning('Please select outside of link. Cut/paste is not allowed for current selection');
 				}
 			});
-
-			
 		}
 	};
 	
@@ -572,10 +563,8 @@ var plainTextLinkEditor = function(argObject){
 			return innerRef.showWarning(message);
 		},
 		setLink : function(htmlString){
-			// See saveEssay for info about allowable html string
 			return innerRef.setLink(htmlString);
 		}
-		
 	};
 	return publicRef;
 };
