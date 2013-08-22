@@ -136,7 +136,7 @@ var plainTextLinkEditor = function(argObject){
 					var prevLinkClass = this.$editorInstance.find('.action-view-link').attr('class');
 					var titleText = $(linkHtml).attr('title');
 					if(!titleText){
-						titleText = ''
+						titleText = '';
 					}
 					var newTitle = 'Go to: ' + titleText + ' [' + $(linkHtml).attr('href') + ']';
 					this.$editorInstance.find('.action-view-link').replaceWith(
@@ -168,7 +168,7 @@ var plainTextLinkEditor = function(argObject){
 		},
 		
 		selectionIsWithinLink : function(){
-			var selection = this.currentSelection
+			var selection = this.currentSelection;
 			var output = false,
 				count = selection[1],
 				searchText = this.$editorInstance.find('.editor').val(),
@@ -403,7 +403,7 @@ var plainTextLinkEditor = function(argObject){
 					innerRef.resetEditor();
 				}
 				if(errorState){
-					innerRef.showWarning($editorId,'Please remove link formatting characters and retry pasting.');
+					innerRef.showWarning('Please remove link formatting characters and retry pasting.');
 					innerRef.$editorInstance.find('.editor').val(priorText);
 				}
 			},10);
@@ -416,7 +416,8 @@ var plainTextLinkEditor = function(argObject){
 			$editorInstance.on('keypress keydown',function(e){
 				var code = (e.keyCode ? e.keyCode : e.which),
 					position = $editorInstance.find('.editor').prop("selectionStart"),
-					text = '';
+					text = '',
+					isError = false;
 					if(innerRef.preventPaste){
 						e.preventDefault;
 						e.stopPropagation;
@@ -447,9 +448,9 @@ var plainTextLinkEditor = function(argObject){
 				}				
 				else if(code === 8){
 
-					var position = $editorInstance.find('.editor').prop("selectionStart"),
-						text = $editorInstance.find('.editor').val().toString(),
-						isError = false;
+					position = $editorInstance.find('.editor').prop("selectionStart");
+					text = $editorInstance.find('.editor').val().toString();
+					
 					if(((text.charAt(position-1) === ']' && text.charAt(position-2) === '_' && text.charAt(position-3) === '_') ||
 						(text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_')  ||
 						(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')) ||
@@ -457,12 +458,10 @@ var plainTextLinkEditor = function(argObject){
 						((text.charAt(position-1) === '_' && text.charAt(position-2) === '_' && text.charAt(position-3) === '[') ||
 						(text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[')  ||
 						(text.charAt(position+1) === '_' && text.charAt(position) === '_' && text.charAt(position-1) === '['))){
-							
-						isError = true
+						isError = true;
 					} 
 					else if(innerRef.preventPaste){
-					
-						isError = true
+						isError = true;
 					}
 					if(isError){
 						e.preventDefault;
@@ -473,9 +472,9 @@ var plainTextLinkEditor = function(argObject){
 				}				
 				else if(code === 46){
 
-					var position = $editorInstance.find('.editor').prop("selectionStart"),
-						text = $editorInstance.find('.editor').val().toString(),
-						isError = false;
+					position = $editorInstance.find('.editor').prop("selectionStart");
+					text = $editorInstance.find('.editor').val().toString();
+
 					if(((text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_') ||
 						(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')  ||
 						(text.charAt(position+2) === ']' && text.charAt(position+1) === '_' && text.charAt(position) === '_')) ||
@@ -484,11 +483,10 @@ var plainTextLinkEditor = function(argObject){
 						(text.charAt(position) === '_' && text.charAt(position+1) === '_' && text.charAt(position-1) === '[')  ||
 						(text.charAt(position+2) === '_' && text.charAt(position+1) === '_' && text.charAt(position) === '['))){
 						
-						isError = true
+						isError = true;
 					} 
 					else if(innerRef.preventPaste){
-					
-						isError = true
+						isError = true;
 					}
 					if(isError){
 						e.preventDefault;
