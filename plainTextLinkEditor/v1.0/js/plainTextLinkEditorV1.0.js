@@ -1,6 +1,6 @@
 /*
 
-	Simple Text Editor v1.0
+	Plain Text Link Editor v1.0
 	2013-08-22
 	
 	Allows designation of hyperlinks in a textarea, which are merged into an HTML string at save
@@ -47,7 +47,7 @@
 			
 */
 
-var simpleTextEditor = function(argObject){
+var plainTextLinkEditor = function(argObject){
 	"use strict";
 
 	var innerRef = {

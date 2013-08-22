@@ -1,5 +1,5 @@
 /*
-	Demo file for simpleTextEditor.js
+	Demo file for plainTextLinkEditorV1.0.js
 	
 	Call the load method of the component like this to demo:
 	
@@ -50,8 +50,8 @@ $('.editor-instance').on('change','select',function(e){
 
 
 // Example instantiations
-var myEditor1 = new simpleTextEditor({'editorId':'textEditor1','onClickGetLinks':onClickGetLinks,'onClickSave':onClickSave});
-var myEditor2 = new simpleTextEditor({'editorId':'textEditor2','onClickGetLinks':onClickGetLinks,'onClickSave':onClickSave});
+var myEditor1 = new plainTextLinkEditor({'editorId':'textEditor1','onClickGetLinks':onClickGetLinks,'onClickSave':onClickSave});
+var myEditor2 = new plainTextLinkEditor({'editorId':'textEditor2','onClickGetLinks':onClickGetLinks,'onClickSave':onClickSave});
 
 
 
