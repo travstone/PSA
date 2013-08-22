@@ -1,3 +1,20 @@
+/*
+	Demo file for simpleTextEditor.js
+	
+	Call the load method of the component like this to demo:
+	
+	
+	myEditor1.setEditorContent('<p>I answered a similar question a few days ago: <a href="http://stackoverflow.com/questions/3211505/detect-pasted-text-with-ctrlv-or-right-click-paste/3212056#3212056" title="example title">http://stackoverflow.com/questions/3211505/detect-pasted-text-with-ctrlv-or-right-click-paste/3212056#3212056</a>. This time I\'ve included <a href="http://www.example.com/index1.html" title="another sample title">quite a long</a> function that accurately gets selection boundaries in textarea in IE; the rest is relatively simple.</p>')
+
+	based on sample instantiation below 
+	
+	see simpleTextEditor.js for more on callbacks and methods
+
+
+
+
+*/
+
 
 
 // Demo callbacks

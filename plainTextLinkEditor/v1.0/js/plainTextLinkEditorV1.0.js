@@ -1,15 +1,50 @@
-// Constructor
-
 /*
+
+	Simple Text Editor v1.0
+	2013-08-22
+	
+	Allows designation of hyperlinks in a textarea, which are merged into an HTML string at save
+
+	Constructor
+
 	@PARAM: argObject (object)
 		properties: 
 		{
-		'editorId': editor instance container id string,
-		'onClickGetLinks': callback for when user clicks 'add link','
-		onClickSave': callback for when user clicks 'save essay'
+			editorId: editor instance container id string,
+			onClickGetLinks: callback for when user clicks 'add link','
+			onClickSave': callback for when user clicks 'save essay'
 		}
+	@RETURN:
+		setEditorContent : called on instance of object to load content
+			@PARAM: content [HTML String]
+			@RETURN: true on succesful load, false if no content supplied
+		getEditorContent : called on instance of object to retrieve content (no params)
+			@RETURN: Content [HTML string] containing only <p> and <a> tags, <a>
+		showMessage : Called on instance of object to display an error message in the editor (no return)
+			@PARAM: message [string]
+		setLink : called on instance of object to set a link (will only work when there's a selection in the editor)
+			@PARAM: <a> tag complete [string]
+			@RETURN: true if link set, false if no selection
+		
+	REQUIRED MARKUP:
 
-
+	Sample of the minimum required markup for component to function.
+	The ID of the containing div is required as one argument to the constructor
+	All other component functions are handled via classes and markup hierarchy
+	
+	<div id="textEditor1" class="editor-instance">
+		<div class="messages-container"><div class="messages"></div></div>
+		<div>
+			<form>
+				<input class="action-save-essay" type="button" value="Save Essay">
+				<input class="action-set-link" type="button" disabled="" value="Add Link" title="Select text then click button to add a link">
+				<input class="action-del-link" type="button" value="Remove Link" style="display:none">
+				<a href="#" class="action-view-link" style="display:none;">View Link</a>
+				<textarea class="editor" rows="18"></textarea>
+			</form>
+		</div>
+	</div>	
+			
 */
 
 var simpleTextEditor = function(argObject){
@@ -125,46 +160,96 @@ var simpleTextEditor = function(argObject){
 			if(selection[2] !== ''){
 				selectionType = 'range';	
 			}
-
+	
+			//console.log(selectionType + ' select');
+				
 			for(count;count>=0;count--){
-				if(searchText.charAt(count) === ']'){
-					if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && selectionType === 'point' && count < selection[0]){
-						// this means we're beyond a closing tag
-						break;
-					} 
-					else if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
-						output = true;
-						break;
+			
+				if(selectionType === 'point'){
+					if(searchText.charAt(count) === ']'){
+						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && count < selection[0]){
+							// this means we're beyond a closing tag
+							//console.log('right of closing signifier, not within link');
+							// prevent paste should be false here
+							break;
+						}
+					}
+					
+					if(searchText.charAt(count) === '_'){
+						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && count < selection[0]){
+							//console.log('within link ');
+							// fires when point is between open and close
+							// prevent paste should be false here
+							output = true;
+							break;
+						}
+						if(searchText.charAt(count+1) === '_' && searchText.charAt(count-1) === '['){
+							//console.log('within link open');
+							// fires when point is between open and close
+							// prevent paste should be true here
+							this.preventPaste = true;
+							output = true;
+							break;
+						}
+						if(searchText.charAt(count+1) === '_' && searchText.charAt(count+2) === ']' && count < selection[0]){
+							//console.log('within link close');
+							// fires when point is between open and close
+							// prevent paste should be true here
+							this.preventPaste = true;
+							output = true;
+							break;
+						}
 					}
 				}
 				
-				if(searchText.charAt(count) === '_'){
-					if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && selectionType === 'point'){
-						output = true;
-						break;
+				else if(selectionType === 'range'){
+					
+					if(searchText.charAt(count) === ']'){
+						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && count >= selection[0] && count <= selection[1]){
+							//console.log('overlapping close tags');
+							// fires when range overlaps the closing tag
+							// prevent paste should be true here
+							this.preventPaste = true;
+							output = true;
+							break;
+						}
+						
+						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '_' && count < selection[0] ){
+							//console.log('right of closing signifier, not within link');
+							// fires when range is outside of tag
+							// prevent paste should be false here
+							break;
+						}
+						
+						
 					}
-					// if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && selectionType === 'range'){
-						// output = true;
-						// break;
-					// }
-					if(searchText.charAt(count-1) === '[' && searchText.charAt(count+1) === '_' && selectionType === 'point'){
-						output = true;
-						break;
+					
+					
+					
+					else if(searchText.charAt(count) === '_'){
+						
+						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && count < selection[0]){
+							//console.log('in link, not overlapping');
+							// fires when selection is entirely within a link
+							// prevent paste should be false here
+							output = true;
+							break;
+						}
+						
+						if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && count >= selection[0]){
+							//console.log('overlapping open tag');
+							// fires when selection overlaps open tag
+							// prevent paste should be true here
+							this.preventPaste = true;
+							output = true;
+							break;
+						}
 					}
-					if(searchText.charAt(count-1) === '_' && searchText.charAt(count-2) === '[' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
-						output = true;
-						break;
-					}
-					if(searchText.charAt(count-1) === '[' && searchText.charAt(count+1) === '_' && selectionType === 'range' && count >= selection[0] && count <= selection[1]){
-						output = true;
-						break;
-					}
-				}
+				}	
 			}
-			if(output){
-				this.preventPaste = true;
-			}
+			
 			return output;
+			
 		},
 		
 		prepareLinkSelector : function() {
@@ -199,6 +284,9 @@ var simpleTextEditor = function(argObject){
 				var editor = this.$editorInstance.find('.editor').get(0);
 				editor.selectionStart = editor.selectionEnd = -1;
 				this.resetEditor();
+				return true;
+			} else {
+				return false;
 			}
 		},
 		
@@ -289,8 +377,19 @@ var simpleTextEditor = function(argObject){
 		},
 		
 		showWarning : function(message){
-			this.$editorInstance.find('#messages').hide();
-			this.$editorInstance.find('#messages').text(message).css('padding','6px').fadeIn('fast').delay(4000).fadeOut('slow').css('padding','');
+			if(this.$editorInstance.find('.messages').is(":visible") === true){
+				this.$editorInstance.find('.messages').stop();
+			}
+			this.$editorInstance.find('.messages').text(message).animate({
+				'opacity':'toggle'
+			},500,function(){
+				innerRef.$editorInstance.find('.messages').delay(4000).animate({
+					'opacity':'toggle'
+				},500,function(){
+					innerRef.keyPressFired = false;
+				});
+			});
+			
 		},
 		
 		inspectPaste : function(priorText){
@@ -315,19 +414,24 @@ var simpleTextEditor = function(argObject){
 			},10);
 		},
 		
+		keyPressFired : false,
+		
 		init : function($editorInstance){
 			
 			$editorInstance.on('keypress keydown',function(e){
 				var code = (e.keyCode ? e.keyCode : e.which),
 					position = $editorInstance.find('.editor').prop("selectionStart"),
 					text = '';
-					// if(innerRef.preventPaste){
-					
-						// e.preventDefault;
-						// e.returnValue = false;
-						// innerRef.showWarning('Please select outside of link');
-						// return false;
-					// }
+					if(innerRef.preventPaste){
+						e.preventDefault;
+						e.stopPropagation;
+						e.returnValue = false;
+						if(!innerRef.keyPressFired){
+							innerRef.showWarning('Please make another selection. Cannot edit across a link signifier');
+							innerRef.keyPressFired = true;
+						}
+						return false;
+					}
 				if(code === 95){
 					text = $editorInstance.find('.editor').val().toString();
 					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '[' ){

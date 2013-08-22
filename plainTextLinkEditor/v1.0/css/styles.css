@@ -4,10 +4,11 @@
 	height:36px;
 	width:45%;
 }
-#messages {
+.messages {
 	text-indent:6px;
 	color:red;
 	background-color:#FFE5E5;
+	display:none;
 }
 form, .results {
 	width:45%;
