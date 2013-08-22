@@ -419,8 +419,8 @@ var plainTextLinkEditor = function(argObject){
 					text = '',
 					isError = false;
 					if(innerRef.preventPaste){
-						e.preventDefault;
-						e.stopPropagation;
+						e.preventDefault();
+						e.stopPropagation();
 						e.returnValue = false;
 						if(!innerRef.keyPressFired){
 							innerRef.showWarning('Please make another selection. Cannot edit across a link signifier');
@@ -464,7 +464,7 @@ var plainTextLinkEditor = function(argObject){
 						isError = true;
 					}
 					if(isError){
-						e.preventDefault;
+						e.preventDefault();
 						e.returnValue = false;
 						innerRef.showWarning('Please use the remove link button to remove a link');
 						return false;
@@ -489,7 +489,7 @@ var plainTextLinkEditor = function(argObject){
 						isError = true;
 					}
 					if(isError){
-						e.preventDefault;
+						e.preventDefault();
 						e.returnValue = false;
 						innerRef.showWarning('Please use the remove link button to remove a link');
 						return false;
