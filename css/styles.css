@@ -28,6 +28,10 @@ textarea {
 .editor-instance input {
 	width:auto;
 }
+.action-view-link {
+	width:auto;
+	padding-top:7px;
+}
 .editor-instance select {
 	width:260px;
 	display:inline;

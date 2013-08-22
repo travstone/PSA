@@ -10,29 +10,32 @@
 <body>
 <div class="container">
 	<h1 id="header">Textarea Test</h1>
-	
+	<!-- IMPLEMENTATION NOTE:
+		
+		THE FOLLOWING MARKUP SHOWS THE REQUIRED CLASSES AND STRUCTURE THAT MUST BE PRESENT FOR THE API TO WORK
+		NOTE THAT THERE ARE TWO INSTANCES PRESENT
+		
+		the outer container has a class of 'editor-instance'
+		
+		The buttons all have classes that begin with 'action-...'
+		
+		the 'View Link' button is actually an anchor, to make things easier. this is styled to match the other editor buttons
+		
+		the actual textarea must have the class 'editor'
+		
+	-->
 	<div id="textEditor1" class="row editor-instance">
+	<!-- need to have a div for error messages -->
 		<div class="messages-container"><div id="messages"></div></div>
 		<div class="col-md-6">
 			<form>
 				<input id="save_essay1" class="promptbutton action-save-essay form-control btn btn-primary btn-xs" type="button" value="Save Essay">
 				<input id="highlight1" class="promptbutton action-set-link form-control btn btn-primary btn-xs" type="button" disabled="" value="Add Link" title="Select text then click button to add a link">
 				<input id="removehigh1" class="promptbutton action-del-link form-control btn btn-primary btn-xs" type="button" value="Remove Link" style="display:none">
-				<input id="visithigh1" class="promptbutton action-view-link form-control btn btn-primary btn-xs" type="button" value="Visit Link" title="" style="display:none">
-				<div class="linkEntry" style="display:none">Choose Artifact
-					<select class="url-list form-control">
-						<option disabled="disabled" selected="selected">Please choose</option>
-						<option><a href="http://www.example.com/index1.html" title="">http://www.example.com/index1.html</a></option>
-						<option><a href="http://www.example.com/index2.html" title="">http://www.example.com/index2.html</a></option>
-						<option><a href="http://www.example.com/index3.html" title="">http://www.example.com/index3.html</a></option>
-					</select>
-				</div>
-
+				<a href="#" id="visithigh1" class="promptbutton action-view-link form-control btn btn-primary btn-xs" style="width:auto; display:none;">View Link</a>
 				<textarea id="textarea1" class="form-control editor" rows="18"></textarea>
 			</form>
 		</div>
-		<div class="col-md-6 results"><h3>Markup: </h3><div class="pre"></div></div>
-		<div class="col-md-6 results"><h3>Display: </h3><div class="output"></div></div>
 		
 	</div>
 	
@@ -43,22 +46,11 @@
 				<input id="save_essay2" class="promptbutton action-save-essay form-control btn btn-primary btn-xs" type="button" value="Save Essay">
 				<input id="highlight2" class="promptbutton action-set-link form-control btn btn-primary btn-xs" type="button" disabled="" value="Add Link" title="Select text then click button to add a link">
 				<input id="removehigh2" class="promptbutton action-del-link form-control btn btn-primary btn-xs" type="button" value="Remove Link" style="display:none">
-				<input id="visithigh2" class="promptbutton action-view-link form-control btn btn-primary btn-xs" type="button" value="Visit Link" title="" style="display:none">
-
-				<div class="linkEntry" style="display:none">Choose Artifact
-					<select class="url-list form-control">
-						<option disabled="disabled" selected="selected">Please choose</option>
-						<option><a href="http://www.example.com/index4.html" title="">http://www.example.com/index4.html</a></option>
-						<option><a href="http://www.example.com/index5.html" title="">http://www.example.com/index5.html</a></option>
-						<option><a href="http://www.example.com/index6.html" title="">http://www.example.com/index6.html</a></option>
-					</select>
-				</div>
+				<a id="visithigh2" href="#" class="promptbutton action-view-link form-control btn btn-primary btn-xs" style="width:auto; display:none;">View Link</a>
 
 				<textarea id="textarea2" class="form-control editor" rows="18"></textarea>
 			</form>
 		</div>
-		<div class="col-md-6 results"><h3>Markup: </h3><div class="pre"></div></div>
-		<div class="col-md-6 results"><h3>Display: </h3><div class="output"></div></div>
 		
 	</div>
 	

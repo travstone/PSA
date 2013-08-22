@@ -1,25 +1,8 @@
 // Constructor
-
-/*
-	@PARAM: argObject (object)
-		properties: 
-		{
-		'editorId': editor instance container id string,
-		'onClickGetLinks': callback for when user clicks 'add link','
-		onClickSave': callback for when user clicks 'save essay'
-		}
-
-
-*/
-
-var simpleTextEditor = function(argObject){
-	"use strict";
-
+var simpleTextEditor = function($editorId,callBackObject){
+"use strict";
 	var innerRef = {
 		
-		$editorInstance : $('#' + argObject.editorId),
-		onClickGetLinks : argObject.onClickGetLinks,
-		onClickSave : argObject.onClickSave,
 		savedLinks : [],
 		bracketReplaceRegex : /(\[__[a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$5\^7\*\(\)\-_\=\+\;\:"'\\<\>\ ]+?__\])/gi,
 		openLinkRegex : /\[__/gi,
@@ -48,6 +31,14 @@ var simpleTextEditor = function(argObject){
 			}
 		},
 		
+		getSelected : function($eventCaller) {
+			var u		= $eventCaller.val();
+			var start	= $eventCaller.get(0).selectionStart;
+			var end	= $eventCaller.get(0).selectionEnd;
+			//return [u.substring(0, start), u.substring(end), u.substring(start, end)];
+			return [start, end, u.substring(start, end)];
+		},
+		
 		addLinkToArray : function(method,link,index) {
 			// index is only needed for array insertion
 			if(method === 'push'){
@@ -61,10 +52,10 @@ var simpleTextEditor = function(argObject){
 			}
 		},
 		
-		linkArrayPosition : function(){
+		linkArrayPosition : function(selection,$editorId){
 			var output = 0,
-				count = this.currentSelection[1]+2,
-				searchText = this.$editorInstance.find('.editor').val().slice(0,count);	
+				count = selection[1]+2,
+				searchText = $editorId.find('.editor').val().slice(0,count);	
 			var regexOutput = searchText.match(this.openLinkRegex);
 			if(regexOutput){
 				output = regexOutput.length;
@@ -72,54 +63,32 @@ var simpleTextEditor = function(argObject){
 			return output;
 		},
 		
-		showExistingLinkTools : function(){
-			var linkId = this.linkArrayPosition();
+		showExistingLinkTools : function($editorId){
+			var linkId = this.linkArrayPosition(this.currentSelection,$editorId);
 			if(linkId > 0){
+				//this.showExistingLinkTools(linkId-1,$editorId);
 				var link = this.savedLinks[linkId-1];
-				// in the next line, we clone the <a> node temporarily, so we can html() the whole link
-				// then use text to replace the link text
-				if(link){
-					var linkHtml = $('<div>').append($(link).clone()).remove().html();
-					var prevLinkId = this.$editorInstance.find('.action-view-link').attr('id');
-					var prevLinkClass = this.$editorInstance.find('.action-view-link').attr('class');
-					var titleText = $(linkHtml).attr('title');
-					if(!titleText){
-						titleText = ''
-					}
-					var newTitle = 'Go to: ' + titleText + ' [' + $(linkHtml).attr('href') + ']';
-					this.$editorInstance.find('.action-view-link').replaceWith(
-						$(link).addClass(prevLinkClass).attr('id',prevLinkId).css('display','').attr('title',newTitle).text('View Link')
-					);
-					this.$editorInstance.find('.action-del-link').attr('data-link-id',linkId-1).show();
-				}
+				$editorId.find('.action-view-link').attr('data-link-location',link).attr('title',link).show();
+				$editorId.find('.action-del-link').attr('data-link-id',linkId).show();
 			}
 		},
 		
-		getSelected : function() {
-			var $editor = this.$editorInstance.find('.editor');
-			var u		= $editor.val();
-			var start	= $editor.get(0).selectionStart;
-			var end		= $editor.get(0).selectionEnd;
-			return [start, end, u.substring(start, end)];
-		},
-		
-		selectInEditor : function(){
-			this.currentSelection = this.getSelected();
-			if(this.selectionIsWithinLink()) {
-				this.showExistingLinkTools();
+		selectInEditor : function($eventCaller,$editorId){
+			this.currentSelection = this.getSelected($eventCaller);
+			if(this.selectionIsWithinLink(this.currentSelection,$editorId)) {
+				this.showExistingLinkTools($editorId);
 			}
 			else if(this.currentSelection[2].length > 0){
-				this.$editorInstance.find('.action-set-link').removeAttr('disabled');
+				$editorId.find('.action-set-link').removeAttr('disabled');
 			} else {
-				this.$editorInstance.find('.action-set-link').attr('disabled','true');
+				$editorId.find('.action-set-link').attr('disabled','true');
 			}
 		},
 		
-		selectionIsWithinLink : function(){
-			var selection = this.currentSelection
+		selectionIsWithinLink : function(selection,$editorId){
 			var output = false,
 				count = selection[1],
-				searchText = this.$editorInstance.find('.editor').val(),
+				searchText = $editorId.find('.editor').val(),
 				selectionType = 'point';
 
 			if(selection[2] !== ''){
@@ -163,45 +132,45 @@ var simpleTextEditor = function(argObject){
 			return output;
 		},
 		
-		prepareLinkSelector : function() {
+		prepareLinkSelector : function($editorId) { // $eventCaller,
 			if(this.currentSelection[2].length > 0){
-				this.$editorInstance.find('.action-set-link').attr('disabled','true');
-				//this.selectText(this.$editorInstance.find('.editor').get(0),this.currentSelection[0],this.currentSelection[1]);
-				this.onClickGetLinks(this.$editorInstance);
+				$editorId.find('.action-set-link').attr('disabled','true');
+				this.selectText($editorId.find('.editor').get(0),this.currentSelection[0],this.currentSelection[1]);
+				publicRef.getLinksMenu($editorId);
 			}
 		},
 		
-		setLink : function(link){
+		setLink : function($editorId,link){ // $eventCaller,
+			//var linkSelected = $editorId.find('.url-list').val();
+			var linkSelected = link;
+
 			if(this.currentSelection[2].length > 0){
-				// in the next line, we clone the <a> node temporarily, so we can html() the whole link
-				// then use text to replace the link text
-				link = $('<div>').append($(link).clone().text(this.currentSelection[2])).remove().html();
-				var textareaContent = this.$editorInstance.find('.editor').val();
-				var priorLinks = this.linkArrayPosition(this.currentSelection);
+				var textareaContent = $editorId.find('.editor').val();
+				var priorLinks = this.linkArrayPosition(this.currentSelection,$editorId);
 				if(priorLinks === 0){
-					this.addLinkToArray('unshift',link);
+					this.addLinkToArray('unshift',linkSelected);
 				}
 				else if(priorLinks === this.savedLinks.length){
-					this.addLinkToArray('push',link);
+					this.addLinkToArray('push',linkSelected);
 				}
 				else {
-					this.addLinkToArray('insert',link,priorLinks);
+					this.addLinkToArray('insert',linkSelected,priorLinks);
 				}
 				
 				var output = [textareaContent.slice(0,this.currentSelection[0]),'[__',this.currentSelection[2],'__]',textareaContent.slice(this.currentSelection[1])].join('');
-				this.$editorInstance.find('.editor').val(output);
-				this.$editorInstance.find('.action-set-link').attr('disabled','true');
-				this.$editorInstance.find('.action-del-link').attr('data-link-id',this.savedLinks.length);
-				var editor = this.$editorInstance.find('.editor').get(0);
-				editor.selectionStart = editor.selectionEnd = -1;
-				this.resetEditor();
+				$editorId.find('.editor').val(output);
+				$editorId.find('.action-set-link').attr('disabled','true');
+				$editorId.find('.action-del-link').attr('data-link-id',this.savedLinks.length);
+				//$editorId.find('.linkEntry').slideToggle('fast').delay(2000);//.css('display','none');
+				//this.selectText($editorId.find('.editor').get(0),this.currentSelection[0]+3,this.currentSelection[1]+3);
+				this.resetEditor($editorId);
 			}
 		},
 		
-		deleteLink : function($target){
+		deleteLink : function($target,$editorId){
 			var count = 0,
 				linkCount = 0,
-				searchText = this.$editorInstance.find('.editor').val(),
+				searchText = $editorId.find('.editor').val(),
 				searchTextLength = searchText.length,
 				targetId = parseInt($target.attr('data-link-id'),10);
 
@@ -213,8 +182,8 @@ var simpleTextEditor = function(argObject){
 						for(count; count<searchTextLength; count++){
 							if(searchText.charAt(count) === '_' && searchText.charAt(count+1) === '_' && searchText.charAt(count+2) === ']'){
 								searchText = searchText.slice(0,bracket1) + searchText.slice((bracket2+2),count) + searchText.slice(count+3);
-								this.$editorInstance.find('.editor').val(searchText);
-								this.resetEditor();
+								$editorId.find('.editor').val(searchText);
+								this.resetEditor($editorId);
 								break;
 							}
 						}
@@ -238,12 +207,12 @@ var simpleTextEditor = function(argObject){
 			return $output;
 		},
 		
-		loadEditorContent : function(content){
+		loadEditorContent : function($editorId,content){
 			if(!content){
 				return false;
 			}
 			var $newContent = $(this.replaceIncomingLinks(content));
-			this.$editorInstance.find('.editor').val($newContent.text());
+			$editorId.find('.editor').val($newContent.text());
 			return true;
 		},
 		
@@ -257,44 +226,44 @@ var simpleTextEditor = function(argObject){
 			return anchorString;
 		},
 		
-		// this returns an html string with only the following elements: anchor,paragraph
-		// the entire string is wrapped in a p tag, and linebreaks are converted to a close para - open para
-		saveEditorContents : function(){
+		saveEditorContents : function($editorId){
 			this.replaceCount = 0;
-			var rawContent = this.$editorInstance.find('.editor').val().trim();
+			var rawContent = $editorId.find('.editor').val().trim();
 			var replacedLinks = rawContent.replace(this.bracketReplaceRegex,this.replaceBrackets);
 			var replacedContent = replacedLinks.replace(this.linebreakRegex,'</p><p>');
-			this.resetEditor();
+			var markupDisplay = replacedContent.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+			$editorId.find('.pre').html("<pre>&lt;p>" + markupDisplay + "&lt;/p></pre>");
+			$editorId.find('.output').html('<p>' + replacedContent + '</p>');
+			$editorId.find('.results').slideDown();
 			return replacedContent;
 		},
 		
-		resetEditor : function(){
-			//var editor = this.$editorInstance.find('.editor').get(0);
-			//editor.selectionStart = editor.selectionEnd = -1;
-			//this.currentSelection = {};
-			this.$editorInstance.find('.action-set-link').attr('disabled','true');
+		resetEditor : function($editorId){
+			this.selectText($editorId.find('.editor').get(0),0,0);
+			this.currentSelection = {};
+			$editorId.find('.action-set-link').attr('disabled','true');
 			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			$('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
 		resetAllEditors : function(){
-			//this.currentSelection = {};
+			this.currentSelection = {};
 			$('.action-set-link').attr('disabled','true');
 			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			$('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
-		showWarning : function(message){
-			this.$editorInstance.find('#messages').hide();
-			this.$editorInstance.find('#messages').text(message).css('padding','6px').fadeIn('fast').delay(4000).fadeOut('slow').css('padding','');
+		showWarning : function($editorId,message){
+			$editorId.find('#messages').hide();
+			$editorId.find('#messages').text(message).css('padding','6px').slideToggle('fast').delay(4000).slideToggle('slow').css('padding','');
 		},
 		
-		inspectPaste : function(priorText){
+		inspectPaste : function($editorId, priorText){
 			setTimeout(function(){
 				var errorState = false;
-				var pastedTextLength = innerRef.$editorInstance.find('.editor').val().length - priorText.length;
+				var pastedTextLength = $editorId.find('.editor').val().length - priorText.length;
 				var pasteStop = innerRef.currentSelection[0] + pastedTextLength;
-				var pastedText = innerRef.$editorInstance.find('.editor').val().slice(innerRef.currentSelection[0],pasteStop);
+				var pastedText = $editorId.find('.editor').val().slice(innerRef.currentSelection[0],pasteStop);
 				if(pastedText.match(innerRef.openLinkRegex)){
 					errorState = true;
 				}
@@ -303,123 +272,130 @@ var simpleTextEditor = function(argObject){
 				}
 				if(errorState){
 					innerRef.showWarning($editorId,'Please remove link formatting characters and retry pasting.');
-					innerRef.$editorInstance.find('.editor').val(priorText);
+					$editorId.find('.editor').val(priorText);
 				}
 			},10);
 		},
 		
-		init : function($editorInstance){
+		init : (function(){
 			
-			$editorInstance.on('keypress keydown',function(e){
+			$editorId.on('keypress keydown',function(e){
 				var code = (e.keyCode ? e.keyCode : e.which),
-					position = $editorInstance.find('.editor').prop("selectionStart"),
+					position = $editorId.find('.editor').prop("selectionStart"),
 					text = '';
 				if(code === 95){
-					text = $editorInstance.find('.editor').val().toString();
+					text = $editorId.find('.editor').val().toString();
 					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '[' ){
-						e.preventDefault();
-						innerRef.showWarning('Sorry, the sequence "[,_,_" is not permitted. Underscore removed.');
+					e.preventDefault();
+					innerRef.showWarning($editorId,'Sorry, the sequence "[,_,_" is not permitted. Underscore removed.');
 					}
 
 				} 
 				else if(code === 93){
-					text = $editorInstance.find('.editor').val().toString();
+					text = $editorId.find('.editor').val().toString();
 					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '_'){
-						e.preventDefault();
-						innerRef.showWarning('Sorry, the sequence "_,_,]" is not permitted. Bracket removed.');
+					e.preventDefault();
+					innerRef.showWarning($editorId,'Sorry, the sequence "_,_,]" is not permitted. Bracket removed.');
 					}
 				}
 				else if(code === 37 || code === 38 || code === 39 || code === 40){
 					// TODO: this is buggy, find a better way to capture arrow-based selection
-					//innerRef.selectInEditor()
-				}
-				else if(code === 8){
-					console.log('backspce');
-					var position = $editorInstance.find('.editor').prop("selectionStart"),
-						text = $editorInstance.find('.editor').val().toString();
-					if(text.charAt(position-1) === ']' && text.charAt(position-2) === '_' && text.charAt(position-3) === '_'){
-						e.preventDefault;
-						e.returnValue = false;
-						innerRef.showWarning('Please use the remove link button to remove a link');
-						return false;
-					}
+					//innerRef.selectInEditor($(this).find('.editor'),$editorId)
 				}
 			});
 			
-			$editorInstance.on('click','.action-set-link',function(e){
+			$editorId.on('click','.action-set-link',function(e){
 				e.stopPropagation();
 				e.preventDefault();
-				innerRef.prepareLinkSelector();
+				innerRef.prepareLinkSelector($editorId);
 			});
 
-			$editorInstance.on('mousedown','.editor',function(){
-				innerRef.resetEditor();
+			$editorId.on('mousedown','.editor',function(){
+				console.log('test');
+				innerRef.resetEditor($editorId);
 				innerRef.preventPaste = false;
 			});
 			
 			$('body').on('mousedown',function(e){
-				if(!$(e.target).is('input') && !$(e.target).is('select') && !$(e.target).is('option') && !$(e.target).is('a')){
-					//if click registers that is not on a button, reset the editor state
+				if(!$(e.target).is('input') && !$(e.target).is('select') && !$(e.target).is('option')){
+					// if click registers that is not on a button, reset the editor state
 					innerRef.resetAllEditors();
 					innerRef.preventPaste = false;
 				}
 			});
 			
-			$editorInstance.on('mouseup','.editor',function(e){
+			$editorId.on('mouseup','.editor',function(e){
 				e.stopPropagation();
 				e.preventDefault();
-				innerRef.selectInEditor();
+				innerRef.selectInEditor($(this),$editorId);
 			});
 			
-			$editorInstance.on('click','.action-del-link',function(e){
+			$editorId.on('change','select',function(e){
 				e.stopPropagation();
 				e.preventDefault();
-				innerRef.deleteLink($(this));
+				innerRef.setLink($(this),$editorId);
 			});
 			
-			$editorInstance.on('click','.action-save-essay',function(e){
+			$editorId.on('click','.action-view-link',function(e){
 				e.stopPropagation();
 				e.preventDefault();
-				innerRef.onClickSave(innerRef.saveEditorContents());
+				window.open($(this).attr('data-link-location'),'Artifact');
 			});
 			
-			$editorInstance.on('paste',function(e){
+			$editorId.on('click','.action-del-link',function(e){
+				e.stopPropagation();
+				e.preventDefault();
+				innerRef.deleteLink($(this),$editorId);
+			});
+			
+			$editorId.on('click','.action-save-essay',function(e){
+				e.stopPropagation();
+				e.preventDefault();
+				innerRef.saveEditorContents($editorId);
+			});
+			
+			$editorId.on('paste',function(e){
 				if(!innerRef.preventPaste){
-					var priorText = innerRef.$editorInstance.find('.editor').val();
-					innerRef.inspectPaste(priorText);
+					var priorText = $editorId.find('.editor').val();
+					innerRef.inspectPaste($editorId,priorText);
 				} else {
 					e.stopPropagation();
 					e.preventDefault();
-					innerRef.showWarning('Sorry, paste is not permitted when selection overlaps a link');
+					innerRef.showWarning($editorId,'Sorry, paste is not permitted when selection overlaps a link');
 				}
 			});
 
 			
-		}
+		})($editorId) // self-executing init
 	};
-	
-	innerRef.init(innerRef.$editorInstance);
 	
 	// PUBLIC API
 	var publicRef = {
-		setEditorContent : function(content){
-			return innerRef.loadEditorContent(content);
+		loadEssay : function(content){
+			return innerRef.loadEditorContent($editorId,content);
 		},
-		getEditorContent : function(){
-			return innerRef.saveEditorContents();
+		saveEssay : function(){
+			return innerRef.saveEditorContents($editorId);
 		},
 		showMessage : function(message){
-			return innerRef.showWarning(message);
+			return innerRef.showWarning($editorId,message);
 		},
-		setLink : function(htmlString){
-			// See saveEssay for info about allowable html string
-			return innerRef.setLink(htmlString);
+		getLinksCallBack : function($editor){
+			// Call out to link pop-up code with jquery-wrapped editor ID
+			showLinkSelector($editor);
 		},
-		currentSelect : function(){
-			return innerRef.currentSelection;
-		}
+		setLinkCallback : function($editor,link){
+			// callback from link chosen
+			//hideLinkSelector($editorRef);
+			return innerRef.setLink($editor,link);
+
+		},
+		savedLinks : innerRef.savedLinks
 		
 	};
 	return publicRef;
-	//return innerRef;
 };
+
+// Example instantiations
+var myEditor1 = new simpleTextEditor($('#textEditor1'),{'getLinksCallback':getLinksCallBack,'setLinkCallback':setLinkCallBack,});
+var myEditor2 = new simpleTextEditor($('#textEditor2'),{'getLinksCallback':getLinksCallBack,'setLinkCallback':setLinkCallBack,});
