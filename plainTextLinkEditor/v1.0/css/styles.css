@@ -1,13 +1,13 @@
 /* css  */
 
 .messages-container {
-	height:36px;
+	height:60px;
 	width:45%;
 }
 .messages {
 	text-indent:6px;
-	color:red;
-	background-color:#FFE5E5;
+	/* color:red;
+	background-color:#FFE5E5; */
 	display:none;
 }
 form, .results {

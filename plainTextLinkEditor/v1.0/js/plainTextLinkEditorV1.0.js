@@ -74,31 +74,34 @@ var plainTextLinkEditor = function(argObject){
 		onClickSave : argObject.onClickSave,
 		savedLinks : [],
 		bracketReplaceRegex : /(\[__[a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$5\^7\*\(\)\-_\=\+\;\:"'\\<\>\ ]+?__\])/gi,
-		openLinkRegex : /\[__/gi,
-		closeLinkRegex : /__\]/gi, 
+		bracketOverlapRegex : /__\][a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$%\^&\*\(\)\-_\=\+\;\:"'\\<\>\ ]+?\[__/gi,
+		openBracketRegex : /\[__/gi,
+		closeBracketRegex : /__\]/gi,
 		replaceCount : 0,
 		linebreakRegex : /[\r\n]+/gi,
 		preventPaste : false,
 		currentSelection : {},
 		
-		selectText : function(textarea,startPos,endPos){
-			// Chrome / Firefox
-			if(typeof(textarea.selectionStart) !== "undefined") {
-				textarea.focus();
-				textarea.selectionStart = startPos;
-				textarea.selectionEnd = endPos;
-			}
-			// IE
-			if (document.selection && document.selection.createRange) {
-				textarea.focus();
-				textarea.select();
-				var range = document.selection.createRange();
-				range.collapse(true);
-				range.moveEnd("character", endPos);
-				range.moveStart("character", startPos);
-				range.select();
-			}
-		},
+		// this method can automatically select text
+		// commented out for now, but may be useful
+		// selectText : function(textarea,startPos,endPos){
+			//Chrome / Firefox
+			// if(typeof(textarea.selectionStart) !== "undefined") {
+				// textarea.focus();
+				// textarea.selectionStart = startPos;
+				// textarea.selectionEnd = endPos;
+			// }
+			//IE
+			// if (document.selection && document.selection.createRange) {
+				// textarea.focus();
+				// textarea.select();
+				// var range = document.selection.createRange();
+				// range.collapse(true);
+				// range.moveEnd("character", endPos);
+				// range.moveStart("character", startPos);
+				// range.select();
+			// }
+		// },
 		
 		addLinkToArray : function(method,link,index) {
 			// index is only needed for array insertion
@@ -117,7 +120,7 @@ var plainTextLinkEditor = function(argObject){
 			var output = 0,
 				count = this.currentSelection[1]+2,
 				searchText = this.$editorInstance.find('.editor').val().slice(0,count);	
-			var regexOutput = searchText.match(this.openLinkRegex);
+			var regexOutput = searchText.match(this.openBracketRegex);
 			if(regexOutput){
 				output = regexOutput.length;
 			}
@@ -156,9 +159,15 @@ var plainTextLinkEditor = function(argObject){
 		},
 		
 		selectInEditor : function(){
+			this.resetEditor();
 			this.currentSelection = this.getSelected();
-			if(this.selectionIsWithinLink()) {
-				this.showExistingLinkTools();
+			
+			if(this.selectionIsWithinLink()){
+				if(!this.multipleSelect()){
+					this.showExistingLinkTools();
+				} else {
+					innerRef.showWarning('More than one link selected, cannot show link tools');
+				}
 			}
 			else if(this.currentSelection[2].length > 0){
 				this.$editorInstance.find('.action-set-link').removeAttr('disabled');
@@ -166,7 +175,30 @@ var plainTextLinkEditor = function(argObject){
 				this.$editorInstance.find('.action-set-link').attr('disabled','true');
 			}
 		},
-		
+
+		multipleSelect : function(){
+			var output = false,
+				matches,
+				selectionText = this.currentSelection[2],
+				openBracket = selectionText.indexOf('['),
+				closeBracket = selectionText.indexOf(']'),
+				underscore = selectionText.indexOf('_'),
+				expandedSelection = this.$editorInstance.find('.editor').val().slice((this.currentSelection[0]-3),(this.currentSelection[1]+3));
+			
+			if(this.currentSelection[2].length === this.$editorInstance.find('.editor').val().length){
+				expandedSelection = this.$editorInstance.find('.editor').val();
+			}
+			
+			
+			if((openBracket > -1 || closeBracket > -1) && underscore > -1){
+				matches = expandedSelection.match(this.bracketOverlapRegex);
+				if(matches){
+					output = true;
+				};
+			};
+			return output;
+		},
+
 		selectionIsWithinLink : function(){
 			var selection = this.currentSelection;
 			var output = false,
@@ -280,9 +312,12 @@ var plainTextLinkEditor = function(argObject){
 				this.$editorInstance.find('.editor').val(output);
 				this.$editorInstance.find('.action-set-link').attr('disabled','true');
 				this.$editorInstance.find('.action-del-link').attr('data-link-id',this.savedLinks.length);
+				// manually set the selection to nothing 
+				// prevents Ie default behavior of selecting entire editor
 				var editor = this.$editorInstance.find('.editor').get(0);
 				editor.selectionStart = editor.selectionEnd = -1;
 				this.resetEditor();
+				this.currentSelection = {};
 				return true;
 			} else {
 				return false;
@@ -361,8 +396,8 @@ var plainTextLinkEditor = function(argObject){
 		
 		resetEditor : function(){
 			this.$editorInstance.find('.action-set-link').attr('disabled','true');
-			$('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
-			$('.action-del-link').removeAttr('data-link-id').hide();
+			this.$editorInstance.find('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
+			this.$editorInstance.find('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
 		resetAllEditors : function(){
@@ -371,14 +406,56 @@ var plainTextLinkEditor = function(argObject){
 			$('.action-del-link').removeAttr('data-link-id').hide();
 		},
 		
-		showWarning : function(message){
-			if(this.$editorInstance.find('.messages').is(":visible") === true){
-				this.$editorInstance.find('.messages').stop();
+		inspectPaste : function(priorText){
+			setTimeout(function(){
+				var errorState = false;
+				var pastedTextLength = innerRef.$editorInstance.find('.editor').val().length - priorText.length;
+				var pasteStop = innerRef.currentSelection[0] + pastedTextLength;
+				var pastedText = innerRef.$editorInstance.find('.editor').val().slice(innerRef.currentSelection[0],pasteStop);
+				var selectStartPlus = 0;
+				if(innerRef.currentSelection[0] > 2){
+					selectStartPlus = innerRef.currentSelection[0]-3;
+				}
+				var pastedTextPlus = innerRef.$editorInstance.find('.editor').val().slice(selectStartPlus,pasteStop+3);
+				if(pastedText.match(innerRef.openBracketRegex)){
+					errorState = true;
+				}
+				else if(pastedText.match(innerRef.closeBracketRegex)){
+					errorState = true;
+				}
+				else if(pastedTextPlus.match(innerRef.openBracketRegex)){
+					errorState = true;
+				}
+				else if(pastedTextPlus.match(innerRef.closeBracketRegex)){
+					errorState = true;
+				}
+				else {
+					innerRef.resetEditor();
+				}
+				if(errorState){
+					innerRef.showWarning('Please remove link formatting characters and retry pasting.','warning');
+					innerRef.$editorInstance.find('.editor').val(priorText);
+				}
+			},10);
+		},
+		
+		showWarning : function(message,type){
+			var messageClass = 'alert-';
+			if(!type){
+				messageClass += 'info'; 
+			} else {
+				messageClass += type; 
 			}
-			this.$editorInstance.find('.messages').text(message).animate({
+			var $messageBlock = this.$editorInstance.find('.messages');
+			
+			if($messageBlock.is(":visible") === true){
+				$messageBlock.stop();
+			}
+			$messageBlock.removeClass('alert-warning alert-info alert-success alert-danger').addClass(messageClass);
+			$messageBlock.text(message).animate({
 				'opacity':'toggle'
 			},500,function(){
-				innerRef.$editorInstance.find('.messages').delay(4000).animate({
+				$messageBlock.delay(4000).animate({
 					'opacity':'toggle'
 				},500,function(){
 					innerRef.keyPressFired = false;
@@ -387,119 +464,186 @@ var plainTextLinkEditor = function(argObject){
 			
 		},
 		
-		inspectPaste : function(priorText){
-			setTimeout(function(){
-				var errorState = false;
-				var pastedTextLength = innerRef.$editorInstance.find('.editor').val().length - priorText.length;
-				var pasteStop = innerRef.currentSelection[0] + pastedTextLength;
-				var pastedText = innerRef.$editorInstance.find('.editor').val().slice(innerRef.currentSelection[0],pasteStop);
-				if(pastedText.match(innerRef.openLinkRegex)){
-					errorState = true;
-				}
-				else if(pastedText.match(innerRef.closeLinkRegex)){
-					errorState = true;
-				}
-				else {
-					innerRef.resetEditor();
-				}
-				if(errorState){
-					innerRef.showWarning('Please remove link formatting characters and retry pasting.');
-					innerRef.$editorInstance.find('.editor').val(priorText);
-				}
-			},10);
+		keyPressFired : false,
+		
+		
+		isRestrictedChar : function(testChar){
+			var output = false;
+			if($.inArray(testChar,this.restrictedChars) > -1){
+				output = true;
+			}
+			return output;
 		},
 		
-		keyPressFired : false,
+		setCharArray : function(){
+			var countStart = 48,
+				countStop = 91;
+			for(countStart;countStart<countStop;countStart++){
+				this.restrictedChars.push(countStart);
+			}
+			
+		},
+		
+		// Key codes for keys we override in certain circumstances
+		// set setCharArray above for the addition of alphabetical chars
+		restrictedChars : [8,10,12,32,34,45,46,92,96,97,98,99,100,101,
+							102,103,104,105,106,107,109,110,111,112,186,187,
+							188,189,190,191,192,219,220,221,222],
+		
+		isEditableBracketUnderscore : function(position,code){
+			var positionBefore = 0,
+				positionAfter = position+1,
+				output = true,
+				text = '',
+				hit;
+			
+			if(position > 2){
+				positionBefore = position-3;
+			}
+			
+			if(code === 109 || code === 189 || code === 173){
+				// character = '_';
+				text = this.$editorInstance.find('.editor').val().slice(positionBefore,positionAfter+2);
+				hit = text.indexOf('[_');
+				if(hit === -1){
+					hit = text.indexOf('_]');
+				}
+			}
+			if(code === 219){
+				// character = '[';
+				text = this.$editorInstance.find('.editor').val().slice(positionBefore,positionAfter+1);
+				hit = text.indexOf('__');
+			}
+			if(code === 221){
+				// character = ']';
+				text = this.$editorInstance.find('.editor').val().slice(positionBefore,positionAfter-1);
+				hit = text.indexOf('__');
+			}
+			
+			if(hit > -1){
+				output = false;
+			}
+
+			return output;
+
+		},
+		
 		
 		init : function($editorInstance){
 			
-			$editorInstance.on('keypress keydown',function(e){
+			innerRef.setCharArray();
+			
+			$editorInstance.on('contextmenu',function(e){ 
+				if(!innerRef.preventPaste){
+					var priorText = innerRef.$editorInstance.find('.editor').val();
+					innerRef.inspectPaste(priorText);
+				} else {
+					e.stopPropagation();
+					e.preventDefault();
+					innerRef.showWarning('Please make a new selection. Cut/paste/delete is not allowed here','warning');
+				}
+			});
+			
+			
+			$editorInstance.on('keyup',function(e){  
+				var code = (e.keyCode ? e.keyCode : e.which);				
+				// Arrow Keys
+				if(code === 37 || code === 38 || code === 39 || code === 40){
+					// TODO: this is buggy, find a better way to capture arrow-based selection
+					innerRef.selectInEditor()
+				}
+			
+			});
+
+			
+			
+			$editorInstance.on('keydown',function(e){ //keypress 
 				var code = (e.keyCode ? e.keyCode : e.which),
 					position = $editorInstance.find('.editor').prop("selectionStart"),
-					text = '',
+					text = $editorInstance.find('.editor').val().toString(),
 					isError = false;
-					if(innerRef.preventPaste){
-						e.preventDefault();
-						e.stopPropagation();
-						e.returnValue = false;
-						if(!innerRef.keyPressFired){
-							innerRef.showWarning('Please make another selection. Cannot edit across a link signifier');
-							innerRef.keyPressFired = true;
+				//console.log(code);
+				
+				
+				if(innerRef.preventPaste && innerRef.isRestrictedChar(code)){
+					e.preventDefault();
+					e.stopPropagation();
+					e.returnValue = false;
+					if(!innerRef.keyPressFired){
+						innerRef.showWarning('Please make another selection. Cannot edit across a link signifier','warning');
+						innerRef.keyPressFired = true;
+					}
+					return false;
+				} else {
+				
+					if(code === 109 || code === 189 || code === 173){
+						if(!innerRef.isEditableBracketUnderscore(position,code)){
+							e.preventDefault();
+							e.returnValue = false;
+							innerRef.showWarning('Sorry, the sequence "[__" is not permitted. Underscore removed.','warning');
 						}
-						return false;
+					} 
+					else if(code === 219 || code === 221){
+						if(!innerRef.isEditableBracketUnderscore(position,code)){
+							e.preventDefault();
+							e.returnValue = false;
+							innerRef.showWarning('Sorry, the sequence "__]" is not permitted. Bracket removed.','warning');
+						}
 					}
-				if(code === 95){
-					text = $editorInstance.find('.editor').val().toString();
-					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '[' ){
-						e.preventDefault();
-						innerRef.showWarning('Sorry, the sequence "[,_,_" is not permitted. Underscore removed.');
-					}
-				} 
-				else if(code === 93){
-					text = $editorInstance.find('.editor').val().toString();
-					if(text.charAt(position-1) === '_' && text.charAt(position-2) === '_'){
-						e.preventDefault();
-						innerRef.showWarning('Sorry, the sequence "_,_,]" is not permitted. Bracket removed.');
-					}
-				}
-				else if(code === 37 || code === 38 || code === 39 || code === 40){
-					// TODO: this is buggy, find a better way to capture arrow-based selection
-					//innerRef.selectInEditor()
-				}				
-				else if(code === 8){
-
-					position = $editorInstance.find('.editor').prop("selectionStart");
-					text = $editorInstance.find('.editor').val().toString();
 					
-					if(((text.charAt(position-1) === ']' && text.charAt(position-2) === '_' && text.charAt(position-3) === '_') ||
-						(text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_')  ||
-						(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')) ||
-						
-						((text.charAt(position-1) === '_' && text.charAt(position-2) === '_' && text.charAt(position-3) === '[') ||
-						(text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[')  ||
-						(text.charAt(position+1) === '_' && text.charAt(position) === '_' && text.charAt(position-1) === '['))){
-						isError = true;
-					} 
-					else if(innerRef.preventPaste){
-						isError = true;
-					}
-					if(isError){
-						e.preventDefault();
-						e.returnValue = false;
-						innerRef.showWarning('Please use the remove link button to remove a link');
-						return false;
-					}
-				}				
-				else if(code === 46){
 
-					position = $editorInstance.find('.editor').prop("selectionStart");
-					text = $editorInstance.find('.editor').val().toString();
+					// Backspace key
+					if(code === 8){
 
-					if(((text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_') ||
-						(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')  ||
-						(text.charAt(position+2) === ']' && text.charAt(position+1) === '_' && text.charAt(position) === '_')) ||
-						
-						((text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[') ||
-						(text.charAt(position) === '_' && text.charAt(position+1) === '_' && text.charAt(position-1) === '[')  ||
-						(text.charAt(position+2) === '_' && text.charAt(position+1) === '_' && text.charAt(position) === '['))){
-						
-						isError = true;
-					} 
-					else if(innerRef.preventPaste){
-						isError = true;
-					}
-					if(isError){
-						e.preventDefault();
-						e.returnValue = false;
-						innerRef.showWarning('Please use the remove link button to remove a link');
-						return false;
+						if(((text.charAt(position-1) === ']' && text.charAt(position-2) === '_' && text.charAt(position-3) === '_') ||
+							(text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_')  ||
+							(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')) ||
+							
+							((text.charAt(position-1) === '_' && text.charAt(position-2) === '_' && text.charAt(position-3) === '[') ||
+							(text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[')  ||
+							(text.charAt(position+1) === '_' && text.charAt(position) === '_' && text.charAt(position-1) === '['))){
+							isError = true;
+						} 
+						else if(innerRef.preventPaste){
+							isError = true;
+						}
+						if(isError){
+							e.preventDefault();
+							e.returnValue = false;
+							innerRef.showWarning('Please use the remove link button to remove a link');
+							return false;
+						}
+					};
+
+					// Delete Key
+					if(code === 46){
+
+						if(((text.charAt(position) === ']' && text.charAt(position-1) === '_' && text.charAt(position-2) === '_') ||
+							(text.charAt(position+1) === ']' && text.charAt(position) === '_' && text.charAt(position-1) === '_')  ||
+							(text.charAt(position+2) === ']' && text.charAt(position+1) === '_' && text.charAt(position) === '_')) ||
+							
+							((text.charAt(position) === '_' && text.charAt(position-1) === '_' && text.charAt(position-2) === '[') ||
+							(text.charAt(position) === '_' && text.charAt(position+1) === '_' && text.charAt(position-1) === '[')  ||
+							(text.charAt(position+2) === '_' && text.charAt(position+1) === '_' && text.charAt(position) === '['))){
+							
+							isError = true;
+						} 
+						else if(innerRef.preventPaste){
+							isError = true;
+						}
+						if(isError){
+							e.preventDefault();
+							e.returnValue = false;
+							innerRef.showWarning('Please use the remove link button to remove a link');
+							return false;
+						}
 					}
 				}
 			});
 			
 			$editorInstance.on('click','.action-set-link',function(e){
-				e.stopPropagation();
-				e.preventDefault();
+				//e.stopPropagation();
+				//e.preventDefault();
 				innerRef.prepareLinkSelector();
 			});
 
@@ -517,20 +661,20 @@ var plainTextLinkEditor = function(argObject){
 			});
 			
 			$editorInstance.on('mouseup','.editor',function(e){
-				e.stopPropagation();
-				e.preventDefault();
+				//e.stopPropagation();
+				//e.preventDefault();
 				innerRef.selectInEditor();
 			});
 			
 			$editorInstance.on('click','.action-del-link',function(e){
-				e.stopPropagation();
-				e.preventDefault();
+				//e.stopPropagation();
+				//e.preventDefault();
 				innerRef.deleteLink($(this));
 			});
 			
 			$editorInstance.on('click','.action-save-essay',function(e){
-				e.stopPropagation();
-				e.preventDefault();
+				//e.stopPropagation();
+				//e.preventDefault();
 				innerRef.onClickSave(innerRef.saveEditorContents());
 			});
 			
@@ -541,7 +685,7 @@ var plainTextLinkEditor = function(argObject){
 				} else {
 					e.stopPropagation();
 					e.preventDefault();
-					innerRef.showWarning('Please select outside of link. Cut/paste is not allowed for current selection');
+					innerRef.showWarning('Please select outside of link. Cut/paste is not allowed for current selection','warning');
 				}
 			});
 		}
