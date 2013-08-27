@@ -8,7 +8,7 @@
 
 	based on sample instantiation below 
 	
-	see simpleTextEditor.js for more on callbacks and methods
+	see plainTextLinkEditorV1.0.js for more on callbacks and methods
 
 
 
