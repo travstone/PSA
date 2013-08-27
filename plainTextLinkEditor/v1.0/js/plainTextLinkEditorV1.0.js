@@ -66,6 +66,7 @@
 	---	If user pastes in something like '[___ some text ___]' and then deletes one of the underscores, 
 		it begins to behave as if it were a link identifier
 	
+	--- paste of link signifier character sequence ('[__' or '__]') is sometimes not prevented
 	
 			
 */
