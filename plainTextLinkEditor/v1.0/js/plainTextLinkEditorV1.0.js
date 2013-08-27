@@ -1,11 +1,10 @@
 /*
 
 	Plain Text Link Editor v1.0
-	2013-08-22
 	
 	OVERVIEW:
 	
-	Allows designation of hyperlinks in a textarea, which are merged into an HTML string at save. Supprts import of markup 
+	Allows designation of hyperlinks in a textarea, which are merged into an HTML string at save. Supports import of markup 
 	which is converted to link signifiers, which appear like this in the textarea:
 	
 	[__ some link text __]
@@ -18,7 +17,7 @@
 			{
 				editorId: editor instance container id string
 				onClickGetLinks: callback for when user clicks 'add link', used to prompt the server side to present the link selector
-				onClickSave': callback for when user clicks 'save essay'
+				onClickSave: callback for when user clicks 'save essay'
 			}
 		@RETURN:
 			setEditorContent : called on instance of object to load content
@@ -28,7 +27,7 @@
 				All other html tags will be stripped from the input
 				
 			getEditorContent : called on instance of object to retrieve content (no params)
-				@RETURN: Content [HTML string] containing only <p> and <a> tags, <a>
+				@RETURN: Content [HTML string] containing only <p> and <a> tags
 				The returned html string will be enclosed in a <p> tag, with line breaks converted 
 				to the sequence '</p><p>', providing paragraphs at each line break
 				<a> tags will be generated for each link signifier '[__ some text __], at the
@@ -60,13 +59,36 @@
 				<textarea class="editor" rows="18"></textarea>
 			</form>
 		</div>
-	</div>	
+	</div>
+	
+	KNOWN ISSUES:
+	
+	---	If user pastes in something like '[___ some text ___]' and then deletes one of the underscores, 
+		it begins to behave as if it were a link identifier
+	
+	
 			
 */
 
 var plainTextLinkEditor = function(argObject){
 	"use strict";
 
+	// PUBLIC API
+	var publicRef = {
+		setEditorContent : function(content){
+			return innerRef.loadEditorContent(content);
+		},
+		getEditorContent : function(){
+			return innerRef.saveEditorContents();
+		},
+		showMessage : function(message){
+			return innerRef.showWarning(message);
+		},
+		setLink : function(htmlString){
+			return innerRef.setLink(htmlString);
+		}
+	};
+	
 	var innerRef = {
 		
 		$editorInstance : $('#' + argObject.editorId),
@@ -81,28 +103,7 @@ var plainTextLinkEditor = function(argObject){
 		linebreakRegex : /[\r\n]+/gi,
 		preventPaste : false,
 		currentSelection : [],
-		
-		// this method can automatically select text
-		// commented out for now, but may be useful
-		// selectText : function(textarea,startPos,endPos){
-			//Chrome / Firefox
-			// if(typeof(textarea.selectionStart) !== "undefined") {
-				// textarea.focus();
-				// textarea.selectionStart = startPos;
-				// textarea.selectionEnd = endPos;
-			// }
-			//IE
-			// if (document.selection && document.selection.createRange) {
-				// textarea.focus();
-				// textarea.select();
-				// var range = document.selection.createRange();
-				// range.collapse(true);
-				// range.moveEnd("character", endPos);
-				// range.moveStart("character", startPos);
-				// range.select();
-			// }
-		// },
-		
+
 		addLinkToArray : function(method,link,index) {
 			// index is only needed for array insertion
 			if(method === 'push'){
@@ -355,7 +356,6 @@ var plainTextLinkEditor = function(argObject){
 		replaceIncomingLinks : function(html){
 			var $output = $(html);
 			$output.find('a').each(function(){
-				$(this).attr('target','_blank');
 				// in the next line, we clone the <a> node temporarily, so we can html() the whole link
 				var anchorString = $('<div>').append($(this).clone()).remove().html();
 				innerRef.addLinkToArray('push',anchorString);
@@ -524,6 +524,29 @@ var plainTextLinkEditor = function(argObject){
 
 		},
 		
+				
+		// this method can automatically select text
+		// commented out for now, but may be useful
+		// selectText : function(textarea,startPos,endPos){
+			//Chrome / Firefox
+			// if(typeof(textarea.selectionStart) !== "undefined") {
+				// textarea.focus();
+				// textarea.selectionStart = startPos;
+				// textarea.selectionEnd = endPos;
+			// }
+			//IE
+			// if (document.selection && document.selection.createRange) {
+				// textarea.focus();
+				// textarea.select();
+				// var range = document.selection.createRange();
+				// range.collapse(true);
+				// range.moveEnd("character", endPos);
+				// range.moveStart("character", startPos);
+				// range.select();
+			// }
+		// },
+		
+		
 		init : function($editorInstance){
 
 			$editorInstance.on('contextmenu',function(e){ 
@@ -675,20 +698,5 @@ var plainTextLinkEditor = function(argObject){
 	
 	innerRef.init(innerRef.$editorInstance);
 	
-	// PUBLIC API
-	var publicRef = {
-		setEditorContent : function(content){
-			return innerRef.loadEditorContent(content);
-		},
-		getEditorContent : function(){
-			return innerRef.saveEditorContents();
-		},
-		showMessage : function(message){
-			return innerRef.showWarning(message);
-		},
-		setLink : function(htmlString){
-			return innerRef.setLink(htmlString);
-		}
-	};
 	return publicRef;
 };

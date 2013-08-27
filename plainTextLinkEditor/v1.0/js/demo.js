@@ -58,9 +58,9 @@ var myEditor2 = new plainTextLinkEditor({'editorId':'textEditor2','onClickGetLin
 // Demo html snippets
 
 var dummyLinksArray = [
-						'<a href="http://www.example.com/index1.html" title="test1">Sample link text</a>',
-						'<a href="http://www.example.com/index2.html" title="test2">Sample link text</a>',
-						'<a href="http://www.example.com/index3.html" title="test3">Sample link text</a>',
+						'<a href="http://www.example.com/index1.html" title="test1" target="_blank">Sample link text</a>',
+						'<a href="http://www.example.com/index2.html" title="test2" target="_blank">Sample link text</a>',
+						'<a href="http://www.example.com/index3.html" title="test3" target="_blank">Sample link text</a>',
 					]
 
 var $linkSelector = $('<div class="linkEntry" style="display:none">Choose Artifact'+
