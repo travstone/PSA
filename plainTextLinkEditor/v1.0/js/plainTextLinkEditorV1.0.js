@@ -75,12 +75,12 @@ var plainTextLinkEditor = function(argObject){
 		savedLinks : [],
 		bracketReplaceRegex : /(\[__[a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$5\^7\*\(\)\-_\=\+\;\:"'\\<\>\ ]+?__\])/gi,
 		bracketOverlapRegex : /__\][a-zA-Z0-9,\.\[\]\{\}\!\?\\\/@#\$%\^&\*\(\)\-_\=\+\;\:"'\\<\>\ ]+?\[__/gi,
-		openBracketRegex : /\[__/gi,
-		closeBracketRegex : /__\]/gi,
+		openBracketRegex : /\[__[^_]/gi,
+		closeBracketRegex : /[^_]__\]/gi,
 		replaceCount : 0,
 		linebreakRegex : /[\r\n]+/gi,
 		preventPaste : false,
-		currentSelection : {},
+		currentSelection : [],
 		
 		// this method can automatically select text
 		// commented out for now, but may be useful
@@ -159,9 +159,9 @@ var plainTextLinkEditor = function(argObject){
 		},
 		
 		selectInEditor : function(){
+			this.clearWarning();
 			this.resetEditor();
 			this.currentSelection = this.getSelected();
-			
 			if(this.selectionIsWithinLink()){
 				if(!this.multipleSelect()){
 					this.showExistingLinkTools();
@@ -194,8 +194,8 @@ var plainTextLinkEditor = function(argObject){
 				matches = expandedSelection.match(this.bracketOverlapRegex);
 				if(matches){
 					output = true;
-				};
-			};
+				}
+			}
 			return output;
 		},
 
@@ -317,7 +317,7 @@ var plainTextLinkEditor = function(argObject){
 				var editor = this.$editorInstance.find('.editor').get(0);
 				editor.selectionStart = editor.selectionEnd = -1;
 				this.resetEditor();
-				this.currentSelection = {};
+				this.currentSelection = [];
 				return true;
 			} else {
 				return false;
@@ -355,6 +355,7 @@ var plainTextLinkEditor = function(argObject){
 		replaceIncomingLinks : function(html){
 			var $output = $(html);
 			$output.find('a').each(function(){
+				$(this).attr('target','_blank');
 				// in the next line, we clone the <a> node temporarily, so we can html() the whole link
 				var anchorString = $('<div>').append($(this).clone()).remove().html();
 				innerRef.addLinkToArray('push',anchorString);
@@ -369,7 +370,10 @@ var plainTextLinkEditor = function(argObject){
 				return false;
 			}
 			var $newContent = $(this.replaceIncomingLinks(content));
-			this.$editorInstance.find('.editor').val($newContent.text());
+			var newTextContent = $newContent.text();
+			var replaceOpenAngles = newTextContent.replace(/(?:&lt;)/gi,'<');
+			var replaceClosedAngles = replaceOpenAngles.replace(/(?:&gt;)/gi,'>');
+			this.$editorInstance.find('.editor').val(replaceClosedAngles);
 			return true;
 		},
 		
@@ -385,16 +389,21 @@ var plainTextLinkEditor = function(argObject){
 		
 		// this returns an html string with only the following elements: anchor,paragraph
 		// the entire string is wrapped in a p tag, and linebreaks are converted to a close para - open para
+		// note also that existing angle-brackets are converted to entities
 		saveEditorContents : function(){
 			this.replaceCount = 0;
 			var rawContent = this.$editorInstance.find('.editor').val().trim();
-			var replacedLinks = rawContent.replace(this.bracketReplaceRegex,this.replaceBrackets);
+			// need to add entity replcaement for angle brackets
+			var replaceOpenAngles = rawContent.replace(/</gi,'&lt;');
+			var replaceClosedAngles = replaceOpenAngles.replace(/>/gi,'&gt;');
+			var replacedLinks = replaceClosedAngles.replace(this.bracketReplaceRegex,this.replaceBrackets);
 			var replacedContent = replacedLinks.replace(this.linebreakRegex,'</p><p>');
 			this.resetEditor();
 			return replacedContent;
 		},
 		
 		resetEditor : function(){
+			this.preventPaste = false;
 			this.$editorInstance.find('.action-set-link').attr('disabled','true');
 			this.$editorInstance.find('.action-view-link').removeAttr('data-link-location').attr('title','').hide();
 			this.$editorInstance.find('.action-del-link').removeAttr('data-link-id').hide();
@@ -447,21 +456,16 @@ var plainTextLinkEditor = function(argObject){
 				messageClass += type; 
 			}
 			var $messageBlock = this.$editorInstance.find('.messages');
-			
-			if($messageBlock.is(":visible") === true){
-				$messageBlock.stop();
-			}
-			$messageBlock.removeClass('alert-warning alert-info alert-success alert-danger').addClass(messageClass);
-			$messageBlock.text(message).animate({
-				'opacity':'toggle'
-			},500,function(){
-				$messageBlock.delay(4000).animate({
-					'opacity':'toggle'
-				},500,function(){
-					innerRef.keyPressFired = false;
-				});
+			$messageBlock.removeClass('alert-warning alert-info alert-success alert-danger').addClass(messageClass).text(message).css('display','block');
+			setTimeout(innerRef.clearWarning,4000);
+		},
+		
+		clearWarning : function(){
+			innerRef.keyPressFired = false;
+			innerRef.$editorInstance.find('.messages').fadeOut(1000, function(){
+				$(this).text('').css('display','none');
+				innerRef.previousWarning = '';
 			});
-			
 		},
 		
 		keyPressFired : false,
@@ -475,20 +479,12 @@ var plainTextLinkEditor = function(argObject){
 			return output;
 		},
 		
-		setCharArray : function(){
-			var countStart = 48,
-				countStop = 91;
-			for(countStart;countStart<countStop;countStart++){
-				this.restrictedChars.push(countStart);
-			}
-			
-		},
-		
 		// Key codes for keys we override in certain circumstances
 		// set setCharArray above for the addition of alphabetical chars
-		restrictedChars : [8,10,12,32,34,45,46,92,96,97,98,99,100,101,
-							102,103,104,105,106,107,109,110,111,112,186,187,
-							188,189,190,191,192,219,220,221,222],
+		restrictedChars : [8,10,12,,13,32,34,45,46,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,
+							63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,
+							87,88,89,90,91,92,96,97,98,99,100,101,102,103,104,105,106,107,109,110,
+							111,112,173,186,187,188,189,190,191,192,219,220,221,222],
 		
 		isEditableBracketUnderscore : function(position,code){
 			var positionBefore = 0,
@@ -528,11 +524,8 @@ var plainTextLinkEditor = function(argObject){
 
 		},
 		
-		
 		init : function($editorInstance){
-			
-			innerRef.setCharArray();
-			
+
 			$editorInstance.on('contextmenu',function(e){ 
 				if(!innerRef.preventPaste){
 					var priorText = innerRef.$editorInstance.find('.editor').val();
@@ -544,50 +537,46 @@ var plainTextLinkEditor = function(argObject){
 				}
 			});
 			
-			
-			$editorInstance.on('keyup',function(e){  
-				var code = (e.keyCode ? e.keyCode : e.which);				
-				// Arrow Keys
-				if(code === 37 || code === 38 || code === 39 || code === 40){
-					// TODO: this is buggy, find a better way to capture arrow-based selection
-					innerRef.selectInEditor()
-				}
-			
-			});
-
-			
-			
 			$editorInstance.on('keydown',function(e){ //keypress 
 				var code = (e.keyCode ? e.keyCode : e.which),
 					position = $editorInstance.find('.editor').prop("selectionStart"),
-					text = $editorInstance.find('.editor').val().toString(),
+					text = $editorInstance.find('.editor').val(),
 					isError = false;
-				//console.log(code);
-				
-				
-				if(innerRef.preventPaste && innerRef.isRestrictedChar(code)){
-					e.preventDefault();
-					e.stopPropagation();
-					e.returnValue = false;
-					if(!innerRef.keyPressFired){
-						innerRef.showWarning('Please make another selection. Cannot edit across a link signifier','warning');
-						innerRef.keyPressFired = true;
-					}
-					return false;
+
+				if((e.ctrlKey && code === 65) || (e.ctrlKey && code === 67)){			
+					$(this).one('keyup',function(){
+						innerRef.selectInEditor();
+					});
+				}
+				else if(code === 37 || code === 38 || code === 39 || code === 40){
+					$(this).one('keyup',function(){
+						innerRef.selectInEditor();
+					});
+				}
+				else if(innerRef.preventPaste && innerRef.isRestrictedChar(code)){
+						e.preventDefault();
+						e.stopPropagation();
+						e.returnValue = false;
+						if(!innerRef.keyPressFired){
+							innerRef.showWarning('Please make another selection. Cannot edit across a link signifier','warning');
+							innerRef.keyPressFired = true;
+						}
+						return false;
+					
 				} else {
 				
 					if(code === 109 || code === 189 || code === 173){
 						if(!innerRef.isEditableBracketUnderscore(position,code)){
 							e.preventDefault();
 							e.returnValue = false;
-							innerRef.showWarning('Sorry, the sequence "[__" is not permitted. Underscore removed.','warning');
+							innerRef.showWarning('Sorry, the sequences "[__" or "__]" are not permitted. Underscore removed.','warning');
 						}
 					} 
 					else if(code === 219 || code === 221){
 						if(!innerRef.isEditableBracketUnderscore(position,code)){
 							e.preventDefault();
 							e.returnValue = false;
-							innerRef.showWarning('Sorry, the sequence "__]" is not permitted. Bracket removed.','warning');
+							innerRef.showWarning('Sorry, the sequences "[__" or "__]" are not permitted. Bracket removed.','warning');
 						}
 					}
 					
@@ -613,7 +602,7 @@ var plainTextLinkEditor = function(argObject){
 							innerRef.showWarning('Please use the remove link button to remove a link');
 							return false;
 						}
-					};
+					}
 
 					// Delete Key
 					if(code === 46){
@@ -641,15 +630,18 @@ var plainTextLinkEditor = function(argObject){
 				}
 			});
 			
-			$editorInstance.on('click','.action-set-link',function(e){
-				//e.stopPropagation();
-				//e.preventDefault();
+			$editorInstance.on('click','.action-set-link',function(){
 				innerRef.prepareLinkSelector();
 			});
 
 			$editorInstance.on('mousedown','.editor',function(){
 				innerRef.resetEditor();
 				innerRef.preventPaste = false;
+				$(this).one('mouseup mouseleave',function(){
+					innerRef.selectInEditor();
+				});
+				
+				
 			});
 			
 			$('body').on('mousedown',function(e){
@@ -660,21 +652,11 @@ var plainTextLinkEditor = function(argObject){
 				}
 			});
 			
-			$editorInstance.on('mouseup','.editor',function(e){
-				//e.stopPropagation();
-				//e.preventDefault();
-				innerRef.selectInEditor();
-			});
-			
-			$editorInstance.on('click','.action-del-link',function(e){
-				//e.stopPropagation();
-				//e.preventDefault();
+			$editorInstance.on('click','.action-del-link',function(){
 				innerRef.deleteLink($(this));
 			});
 			
-			$editorInstance.on('click','.action-save-essay',function(e){
-				//e.stopPropagation();
-				//e.preventDefault();
+			$editorInstance.on('click','.action-save-essay',function(){
 				innerRef.onClickSave(innerRef.saveEditorContents());
 			});
 			
